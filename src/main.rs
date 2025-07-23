@@ -28,7 +28,7 @@ fn main() -> Result<(), std::io::Error> {
     // state.set_cell(Coords::new(31, 28), Cell::Alive);
 
     // loop {
-    //     let frame = Frame::from(&state);
+    //     let frame = Frame::new(&mut state, 10);
     //     println!("\x1b[3J\x1b[H\x1b[2J");
     //     println!("{}", frame.to_ascii());
     //     state.next();
@@ -36,8 +36,8 @@ fn main() -> Result<(), std::io::Error> {
     // }
 
     loop {
-        let frame = Frame::from(&state);
-        render::render_kitty(&frame, 10)?;
+        let mut frame = Frame::new(&mut state, 10);
+        render::render_kitty(&mut frame)?;
         state.next();
     }
 }

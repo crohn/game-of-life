@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::{cell::Cell, coords::Coords};
 
 const RGB_BYTES: usize = 3;
@@ -7,6 +9,8 @@ pub struct State {
     pub(crate) cols: usize,
     pub(crate) rows: usize,
     pub(crate) board: Vec<Cell>,
+    next: Vec<Cell>,
+    rgb: Vec<u8>,
 }
 
 impl State {
@@ -16,6 +20,8 @@ impl State {
             cols,
             rows,
             board: vec![Cell::Dead; cols * rows],
+            next: vec![Cell::Dead; cols * rows],
+            rgb: vec![0u8; cols * rows * RGB_BYTES],
         }
     }
 
@@ -36,12 +42,10 @@ impl State {
     }
 
     pub fn next(&mut self) {
-        let mut next = self.board.clone();
-
         for (i, cell) in self.board.iter().enumerate() {
             let coords = Coords::from_index(i, self.cols);
             let alive_neighbors = self.count_alive_neighbors(coords);
-            next[i] = match cell {
+            self.next[i] = match cell {
                 Cell::Alive => {
                     if alive_neighbors < 2 || alive_neighbors > 3 {
                         Cell::Dead
@@ -60,7 +64,7 @@ impl State {
         }
 
         self.iteration += 1;
-        self.board = next;
+        mem::swap(&mut self.board, &mut self.next);
     }
 
     pub fn set_cell(&mut self, coords: Coords, cell: Cell) {
@@ -72,14 +76,13 @@ impl State {
         self.board.iter().map(|cell| cell.to_ascii()).collect()
     }
 
-    pub fn to_rgb(&self) -> Vec<u8> {
-        let mut buf = vec![0u8; self.board.len() * RGB_BYTES];
+    pub fn to_rgb(&mut self) -> &Vec<u8> {
         let mut i = 0;
         for cell in &self.board {
             let (r, g, b) = cell.to_rgb();
-            buf[i..i + 3].copy_from_slice(&[r, g, b]);
+            self.rgb[i..i + 3].copy_from_slice(&[r, g, b]);
             i += 3;
         }
-        buf
+        &self.rgb
     }
 }
