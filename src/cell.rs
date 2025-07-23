@@ -11,4 +11,11 @@ impl Cell {
             Cell::Dead => b'.',
         }
     }
+
+    pub fn to_rgb(&self) -> (u8, u8, u8) {
+        match self {
+            Cell::Alive => (0xff, 0xff, 0xff),
+            Cell::Dead => (0x00, 0x00, 0x00),
+        }
+    }
 }

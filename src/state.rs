@@ -1,5 +1,7 @@
 use crate::{cell::Cell, coords::Coords};
 
+const RGB_BYTES: usize = 3;
+
 pub struct State {
     pub(crate) iteration: usize,
     pub(crate) cols: usize,
@@ -68,5 +70,16 @@ impl State {
 
     pub fn to_ascii(&self) -> Vec<u8> {
         self.board.iter().map(|cell| cell.to_ascii()).collect()
+    }
+
+    pub fn to_rgb(&self) -> Vec<u8> {
+        let mut buf = vec![0u8; self.board.len() * RGB_BYTES];
+        let mut i = 0;
+        for cell in &self.board {
+            let (r, g, b) = cell.to_rgb();
+            buf[i..i + 3].copy_from_slice(&[r, g, b]);
+            i += 3;
+        }
+        buf
     }
 }
