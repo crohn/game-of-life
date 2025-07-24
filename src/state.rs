@@ -7,31 +7,41 @@ pub struct State {
     pub(crate) cols: usize,
     pub(crate) rows: usize,
     pub(crate) board: Vec<Cell>,
+    neighbors: Vec<Vec<usize>>,
     next: Vec<Cell>,
 }
 
 impl State {
     pub fn new(cols: usize, rows: usize) -> Self {
+        let mut neighbors = vec![vec![]; cols * rows];
+
+        for index in 0..cols * rows {
+            let coords = Coords::from_index(index, cols);
+            for x in coords.x - 1..=coords.x + 1 {
+                for y in coords.y - 1..=coords.y + 1 {
+                    if coords.x == x && coords.y == y {
+                        continue;
+                    }
+                    neighbors[index].push(Coords::new(x, y).to_index(cols, rows));
+                }
+            }
+        }
+
         State {
             iteration: 0,
             cols,
             rows,
             board: vec![Cell::Dead; cols * rows],
+            neighbors,
             next: vec![Cell::Dead; cols * rows],
         }
     }
 
-    fn count_alive_neighbors(&self, coords: Coords) -> usize {
+    fn count_alive_neighbors(&self, index: usize) -> usize {
         let mut count: usize = 0;
-        for x in coords.x - 1..=coords.x + 1 {
-            for y in coords.y - 1..=coords.y + 1 {
-                if coords.x == x && coords.y == y {
-                    continue;
-                }
-                let index = Coords::new(x, y).to_index(self.cols, self.rows);
-                if self.board[index] == Cell::Alive {
-                    count += 1;
-                }
+        for &neighbor in &self.neighbors[index] {
+            if self.board[neighbor] == Cell::Alive {
+                count += 1;
             }
         }
         count
@@ -39,8 +49,7 @@ impl State {
 
     pub fn next(&mut self) {
         for (i, cell) in self.board.iter().enumerate() {
-            let coords = Coords::from_index(i, self.cols);
-            let alive_neighbors = self.count_alive_neighbors(coords);
+            let alive_neighbors = self.count_alive_neighbors(i);
             self.next[i] = match cell {
                 Cell::Alive => {
                     if alive_neighbors < 2 || alive_neighbors > 3 {
