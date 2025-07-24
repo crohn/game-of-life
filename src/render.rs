@@ -51,6 +51,8 @@ impl Frame {
             let row_cur = buf_cur;
 
             for cell in row {
+                // Skip dead cells, because the background is set to dead. This
+                // potentially saves a bunch of writes.
                 if matches!(cell, Cell::Alive) {
                     self.buffer[buf_cur..buf_cur + chunk_len].copy_from_slice(&self.chunk_alive);
                 }
@@ -63,6 +65,7 @@ impl Frame {
                     .copy_within(row_cur..buf_cur, buf_cur + (buf_cur - row_cur) * i);
             }
 
+            // advance cursor by a whole row
             buf_cur += (buf_cur - row_cur) * (self.scale - 1);
         }
 

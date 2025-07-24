@@ -74,6 +74,10 @@ fn encode_bytes(input: &[u8], output: &mut [u8]) {
 }
 
 pub fn encode(input: &[u8]) -> String {
+    // (1 + 2) / 3 * 4 -> 3 / 3 * 4 = 1 * 4 -> AA==
+    // (2 + 2) / 3 * 4 -> 4 / 3 * 4 = 1 * 4 -> AAA=
+    // (3 + 2) / 3 * 4 -> 5 / 3 * 4 = 1 * 4 -> AAAA
+    // (4 + 2) / 3 * 4 -> 6 / 3 * 4 / 2 * 8 -> AAAAAA==
     let output_len = (input.len() + 2) / 3 * 4;
     let mut buf = vec![0u8; output_len];
     encode_bytes(input, &mut buf);
