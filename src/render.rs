@@ -1,10 +1,11 @@
-use crate::{base64, state::State};
+use crate::{base64, cell::Cell, state::State};
 use std::{io::Write, str};
 
 const CELL_BYTES: usize = 3;
 
 pub struct Frame<'a> {
     buffer: Vec<u8>,
+    chunk_alive: Vec<u8>,
     cols: usize,
     scale: usize,
     state: &'a mut State,
@@ -14,10 +15,10 @@ impl<'a> Frame<'a> {
     pub fn new(state: &'a mut State, scale: usize) -> Self {
         let cols = state.cols;
         let rows = state.rows;
-        let buffer = vec![0u8; cols * rows * CELL_BYTES * scale * scale];
 
         Frame {
-            buffer,
+            buffer: vec![0x00; cols * rows * CELL_BYTES * scale * scale],
+            chunk_alive: vec![0xff; CELL_BYTES * scale],
             cols,
             scale,
             state,
@@ -45,31 +46,19 @@ impl<'a> Frame<'a> {
         frame
     }
 
-    //
-    // 0 1 2   3 4 5      0 1 2 3 4 5   6 7 8 9 a b
-    //                 => c d e f 0 1   2 3 4 5 6 7
-    // 6 7 8   9 a b
-    //                    8 9 a b c d   e f 0 1 2 3
-    //                    4 5 6 7 8 9   a b c d e f
-    //
     pub fn to_rgb(&mut self) -> String {
-        let bytes = &mut self.state.to_rgb();
-        let bytes_row_len = self.cols * CELL_BYTES;
-
+        let chunk_len = self.chunk_alive.len();
         let mut buf_cur = 0;
 
-        for row in bytes.chunks_exact(bytes_row_len) {
+        for row in self.state.board.chunks_exact(self.cols) {
             let row_cur = buf_cur;
 
-            for cell in row.chunks_exact(CELL_BYTES) {
-                self.buffer[buf_cur..buf_cur + CELL_BYTES].copy_from_slice(cell);
-
-                for i in 1..self.scale {
-                    self.buffer
-                        .copy_within(buf_cur..buf_cur + CELL_BYTES, buf_cur + CELL_BYTES * i);
+            for cell in row {
+                if matches!(cell, Cell::Alive) {
+                    self.buffer[buf_cur..buf_cur + chunk_len].copy_from_slice(&self.chunk_alive);
                 }
 
-                buf_cur += CELL_BYTES * self.scale;
+                buf_cur += chunk_len;
             }
 
             for i in 0..self.scale - 1 {

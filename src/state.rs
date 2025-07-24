@@ -2,15 +2,12 @@ use std::mem;
 
 use crate::{cell::Cell, coords::Coords};
 
-const RGB_BYTES: usize = 3;
-
 pub struct State {
     pub(crate) iteration: usize,
     pub(crate) cols: usize,
     pub(crate) rows: usize,
     pub(crate) board: Vec<Cell>,
     next: Vec<Cell>,
-    rgb: Vec<u8>,
 }
 
 impl State {
@@ -21,7 +18,6 @@ impl State {
             rows,
             board: vec![Cell::Dead; cols * rows],
             next: vec![Cell::Dead; cols * rows],
-            rgb: vec![0u8; cols * rows * RGB_BYTES],
         }
     }
 
@@ -74,15 +70,5 @@ impl State {
 
     pub fn to_ascii(&self) -> Vec<u8> {
         self.board.iter().map(|cell| cell.to_ascii()).collect()
-    }
-
-    pub fn to_rgb(&mut self) -> &Vec<u8> {
-        let mut i = 0;
-        for cell in &self.board {
-            let (r, g, b) = cell.to_rgb();
-            self.rgb[i..i + 3].copy_from_slice(&[r, g, b]);
-            i += 3;
-        }
-        &self.rgb
     }
 }
