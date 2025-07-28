@@ -1,9 +1,9 @@
 use sdl2::{
-    Sdl, TimerSubsystem, event::Event, keyboard::Keycode, pixels::Color, rect::Rect,
-    render::Canvas, video::Window,
+    Sdl, TimerSubsystem, event::Event, keyboard::Keycode, mouse::MouseButton, pixels::Color,
+    rect::Rect, render::Canvas, video::Window,
 };
 
-use crate::core::{Cell, State, coords_from_index};
+use crate::core::{Cell, Coords, State, coords_from_index};
 
 const COLOR_DEAD: Color = Color::RGB(0x00, 0x00, 0x00);
 const COLOR_ALIVE: Color = Color::RGB(0xff, 0xff, 0xff);
@@ -77,10 +77,23 @@ impl Game {
                         keycode: Some(Keycode::Escape),
                         ..
                     } => break 'running,
+
                     Event::KeyDown {
                         keycode: Some(Keycode::Space),
                         ..
                     } => self.running = !self.running,
+
+                    Event::MouseButtonDown {
+                        mouse_btn: MouseButton::Left,
+                        x,
+                        y,
+                        ..
+                    } => {
+                        let x = x / scale as i32;
+                        let y = y / scale as i32;
+                        self.state.toggle_cell(Coords { x, y });
+                    }
+
                     _ => {}
                 }
             }

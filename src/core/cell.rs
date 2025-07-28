@@ -29,4 +29,11 @@ impl Cell {
             (Cell::Dead, _) => Cell::Dead,
         }
     }
+
+    pub fn toggle(&mut self) {
+        *self = match self {
+            Cell::Alive => Cell::Dead,
+            Cell::Dead => Cell::Alive,
+        }
+    }
 }

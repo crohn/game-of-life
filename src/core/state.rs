@@ -72,6 +72,11 @@ impl State {
         let index = coords.to_index(self.cols, self.rows);
         self.curr[index] = value;
     }
+
+    pub fn toggle_cell(&mut self, coords: Coords) {
+        let index = coords.to_index(self.cols, self.rows);
+        self.curr[index].toggle();
+    }
 }
 
 /// Returns a vector containing current cell's neighbors indices.
