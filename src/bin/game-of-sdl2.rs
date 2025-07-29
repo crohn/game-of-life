@@ -1,6 +1,6 @@
 use game_of_life::{
     core::{Cell, Coords, State},
-    render::sdl::{Game, SdlContext},
+    render::sdl::{game::Game, sdl_context::SdlContext},
 };
 
 const COLS: u32 = 80;
