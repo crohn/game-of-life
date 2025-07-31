@@ -1,5 +1,7 @@
 use std::mem;
 
+use crate::core::Config;
+
 use super::{
     cell::Cell,
     coords::{self, Coords, coords_from_index},
@@ -29,7 +31,10 @@ impl State {
     ///
     /// We also pre-compute the indices of all neighbors for each cell, in order
     /// to speedup neighbor inspection.
-    pub fn new(cols: u32, rows: u32) -> Self {
+    pub fn new(config: &Config) -> Self {
+        let cols = config.cols;
+        let rows = config.rows;
+        //
         let board_capacity = (cols * rows) as usize;
         let curr = vec![Cell::Dead; board_capacity];
         let next = curr.clone();

@@ -1,7 +1,6 @@
 pub mod game;
+pub mod renderer;
+pub mod timer;
 
-#[path = "sdl/sdl-context.rs"]
-pub mod sdl_context;
-
-#[path = "sdl/user-action.rs"]
-pub mod user_action;
+#[path = "sdl/event-handler.rs"]
+pub mod event_handler;

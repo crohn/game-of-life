@@ -1,13 +1,15 @@
 use game_of_life::{
-    core::{Cell, Coords, State},
+    core::{Cell, Config, Coords, State},
     render::kitty,
 };
 
 const COLS: u32 = 80;
 const ROWS: u32 = 25;
+const SCALE: u32 = 1;
 
 fn main() -> Result<(), std::io::Error> {
-    let mut state = State::new(COLS, ROWS);
+    let config = Config::new(COLS, ROWS, SCALE);
+    let mut state = State::new(&config);
 
     state.set_cell(Coords { x: 40, y: 39 }, Cell::Alive);
     state.set_cell(Coords { x: 40, y: 40 }, Cell::Alive);
