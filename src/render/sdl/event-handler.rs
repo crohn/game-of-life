@@ -1,5 +1,10 @@
 use sdl2::{EventPump, event::Event, keyboard::Keycode};
 
+pub enum PollResult {
+    Continue,
+    Quit,
+}
+
 pub enum Action {
     PlayPause,
 }
@@ -13,14 +18,14 @@ impl EventHandler {
         EventHandler { event_pump }
     }
 
-    pub fn poll(&mut self, actions: &mut Vec<Action>) -> Option<()> {
+    pub fn poll(&mut self, actions: &mut Vec<Action>) -> PollResult {
         for event in self.event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } => return None,
+                Event::Quit { .. } => return PollResult::Quit,
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => return None,
+                } => return PollResult::Quit,
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
                     ..
@@ -28,6 +33,6 @@ impl EventHandler {
                 _ => {}
             }
         }
-        Some(())
+        PollResult::Continue
     }
 }

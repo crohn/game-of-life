@@ -1,4 +1,4 @@
-use crate::core::State;
+use crate::{core::State, render::sdl::event_handler::PollResult};
 
 use super::{
     event_handler::{Action, EventHandler},
@@ -37,7 +37,7 @@ impl<'a> Game<'a> {
             self.timer.start();
 
             self.actions.clear();
-            let Some(()) = self.event_handler.poll(&mut self.actions) else {
+            let PollResult::Continue = self.event_handler.poll(&mut self.actions) else {
                 break 'running;
             };
 
