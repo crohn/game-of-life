@@ -6,7 +6,9 @@ pub enum PollResult {
 }
 
 pub enum Action {
+    Pause,
     PlayPause,
+    ShowHelp,
 }
 
 pub struct EventHandler {
@@ -26,6 +28,13 @@ impl EventHandler {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => return PollResult::Quit,
+                Event::KeyDown {
+                    keycode: Some(Keycode::H),
+                    ..
+                } => {
+                    actions.push(Action::Pause);
+                    actions.push(Action::ShowHelp);
+                }
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
                     ..

@@ -8,7 +8,10 @@ use game_of_life::{
 const COLS: u32 = 80;
 const ROWS: u32 = 25;
 const SCALE: u32 = 10;
+
 const FPS: u64 = 30;
+
+const FONT_SIZE: u16 = 12;
 
 fn main() -> Result<(), String> {
     let config = Config {
@@ -20,9 +23,13 @@ fn main() -> Result<(), String> {
     let window = layout.window_geometry();
 
     let sdl_ctx = sdl2::init()?;
+    let ttf_ctx = sdl2::ttf::init()?;
     let video_sys = sdl_ctx.video()?;
     let timer_sys = sdl_ctx.timer()?;
     let event_pump = sdl_ctx.event_pump()?;
+    // at the moment, for simplicity I am loading font from here, but a proper
+    // implementation would consist in loading systems font by OS
+    let font = ttf_ctx.load_font("./Monaco.ttf", FONT_SIZE)?;
 
     let window = video_sys
         .window("game-of-sdl2", window.w, window.h)
@@ -37,7 +44,7 @@ fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let event_handler = EventHandler::new(event_pump);
-    let renderer = Renderer::new(layout, canvas);
+    let renderer = Renderer::new(layout, canvas, font);
     let timer = Timer::new(timer_sys, FPS);
 
     let mut state = State::new(&config);

@@ -1,4 +1,7 @@
-use crate::{core::State, render::sdl::event_handler::PollResult};
+use crate::{
+    core::State,
+    render::sdl::{event_handler::PollResult, game_state::GameState},
+};
 
 use super::{
     event_handler::{Action, EventHandler},
@@ -6,27 +9,32 @@ use super::{
     timer::Timer,
 };
 
-pub struct Game {
+pub struct Game<'a> {
     actions: Vec<Action>,
     event_handler: EventHandler,
-    renderer: Renderer,
-    running: bool,
+    game_state: GameState,
+    renderer: Renderer<'a>,
     state: State,
     timer: Timer,
 }
 
-impl Game {
+impl<'a> Game<'a> {
     pub fn new(
         event_handler: EventHandler,
-        renderer: Renderer,
+        renderer: Renderer<'a>,
         timer: Timer,
         state: State,
     ) -> Self {
+        let game_state = GameState {
+            running: false,
+            show_help: false,
+        };
+
         Game {
             actions: Vec::new(),
             event_handler,
+            game_state,
             renderer,
-            running: false,
             state,
             timer,
         }
@@ -43,7 +51,7 @@ impl Game {
 
             self.update();
 
-            self.renderer.draw(&self.state)?;
+            self.renderer.draw(&self.state, &self.game_state)?;
 
             self.timer.delay_if_early();
         }
@@ -54,11 +62,13 @@ impl Game {
     fn update(&mut self) {
         for action in &self.actions {
             match action {
-                Action::PlayPause => self.running = !self.running,
+                Action::Pause => self.game_state.pause(),
+                Action::PlayPause => self.game_state.toggle(),
+                Action::ShowHelp => self.game_state.help(),
             }
         }
 
-        if self.running {
+        if self.game_state.running {
             self.state.next();
         }
     }
