@@ -1,6 +1,8 @@
 use game_of_life::{
     core::{Cell, Config, Coords, State},
-    render::sdl::{event_handler::EventHandler, game::Game, renderer::Renderer, timer::Timer},
+    render::sdl::{
+        event_handler::EventHandler, game::Game, layout::Layout, renderer::Renderer, timer::Timer,
+    },
 };
 
 const COLS: u32 = 80;
@@ -9,7 +11,13 @@ const SCALE: u32 = 10;
 const FPS: u64 = 30;
 
 fn main() -> Result<(), String> {
-    let config = Config::new(COLS, ROWS, SCALE);
+    let config = Config {
+        cols: COLS,
+        rows: ROWS,
+    };
+
+    let layout = Layout::new(&config, SCALE);
+    let window = layout.window_geometry();
 
     let sdl_ctx = sdl2::init()?;
     let video_sys = sdl_ctx.video()?;
@@ -17,7 +25,7 @@ fn main() -> Result<(), String> {
     let event_pump = sdl_ctx.event_pump()?;
 
     let window = video_sys
-        .window("game-of-sdl2", config.width(), config.height())
+        .window("game-of-sdl2", window.w, window.h)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
@@ -29,7 +37,7 @@ fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let event_handler = EventHandler::new(event_pump);
-    let renderer = Renderer::new(&config, canvas);
+    let renderer = Renderer::new(layout, canvas);
     let timer = Timer::new(timer_sys, FPS);
 
     let mut state = State::new(&config);

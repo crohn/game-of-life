@@ -6,19 +6,19 @@ use super::{
     timer::Timer,
 };
 
-pub struct Game<'a> {
+pub struct Game {
     actions: Vec<Action>,
     event_handler: EventHandler,
-    renderer: Renderer<'a>,
+    renderer: Renderer,
     running: bool,
     state: State,
     timer: Timer,
 }
 
-impl<'a> Game<'a> {
+impl Game {
     pub fn new(
         event_handler: EventHandler,
-        renderer: Renderer<'a>,
+        renderer: Renderer,
         timer: Timer,
         state: State,
     ) -> Self {

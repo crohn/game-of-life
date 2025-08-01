@@ -1,21 +1,30 @@
-use crate::core::{Cell, Config, State, coords_from_index};
+use super::layout::Layout;
+use crate::core::{Cell, State, coords_from_index};
 use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
 
 const COLOR_ALIVE: Color = Color::RGB(0xff, 0xff, 0xff);
 const COLOR_DEAD: Color = Color::RGB(0x00, 0x00, 0x00);
+const COLOR_STATUSBAR: Color = Color::RGB(0x00, 0x00, 0xff);
 
-pub struct Renderer<'a> {
+pub struct Renderer {
     canvas: Canvas<Window>,
-    config: &'a Config,
+    layout: Layout,
 }
 
-impl<'a> Renderer<'a> {
-    pub fn new(config: &'a Config, canvas: Canvas<Window>) -> Self {
-        Renderer { canvas, config }
+impl Renderer {
+    pub fn new(layout: Layout, canvas: Canvas<Window>) -> Self {
+        Renderer { canvas, layout }
+    }
+
+    pub fn draw(&mut self, state: &State) -> Result<(), String> {
+        self.render_board(state)?;
+        self.render_statusbar()?;
+        self.canvas.present();
+        Ok(())
     }
 
     pub fn render_board(&mut self, state: &State) -> Result<(), String> {
-        let scale = self.config.scale();
+        let scale = self.layout.scale;
 
         self.canvas.set_draw_color(COLOR_DEAD);
         self.canvas.clear();
@@ -37,9 +46,15 @@ impl<'a> Renderer<'a> {
         Ok(())
     }
 
-    pub fn draw(&mut self, state: &State) -> Result<(), String> {
-        self.render_board(state)?;
-        self.canvas.present();
-        Ok(())
+    pub fn render_statusbar(&mut self) -> Result<(), String> {
+        let rect = Rect::new(
+            self.layout.statbar.x as i32,
+            self.layout.statbar.y as i32,
+            self.layout.statbar.w,
+            self.layout.statbar.h,
+        );
+
+        self.canvas.set_draw_color(COLOR_STATUSBAR);
+        self.canvas.fill_rect(rect)
     }
 }

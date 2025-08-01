@@ -5,10 +5,13 @@ use game_of_life::{
 
 const COLS: u32 = 80;
 const ROWS: u32 = 25;
-const SCALE: u32 = 1;
 
 fn main() -> Result<(), std::io::Error> {
-    let config = Config::new(COLS, ROWS, SCALE);
+    let config = Config {
+        cols: COLS,
+        rows: ROWS,
+    };
+
     let mut state = State::new(&config);
 
     state.set_cell(Coords { x: 40, y: 39 }, Cell::Alive);
