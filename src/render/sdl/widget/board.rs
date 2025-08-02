@@ -13,6 +13,7 @@ pub struct Board {}
 impl Widget for Board {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
         let scale = ctx.layout.scale;
+        let grid = if ctx.game_state.show_grid { 1 } else { 0 };
 
         ctx.canvas.set_draw_color(COLOR_ALIVE); // TODO move to theme
         for (i, cell) in ctx.state.curr.iter().enumerate() {
@@ -20,8 +21,8 @@ impl Widget for Board {
             let rect = Rect::new(
                 coords.x * scale as i32,
                 coords.y * scale as i32,
-                scale,
-                scale,
+                scale - grid,
+                scale - grid,
             );
             if matches!(cell, Cell::Alive) {
                 ctx.canvas.fill_rect(rect)?;

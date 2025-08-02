@@ -1,6 +1,17 @@
 pub struct GameState {
     pub running: bool,
+    pub show_grid: bool,
     pub show_help: bool,
+}
+
+impl Default for GameState {
+    fn default() -> Self {
+        Self {
+            running: false,
+            show_grid: false,
+            show_help: false,
+        }
+    }
 }
 
 impl GameState {
@@ -16,5 +27,9 @@ impl GameState {
         if !self.show_help {
             self.running = !self.running;
         }
+    }
+
+    pub fn toggle_grid(&mut self) {
+        self.show_grid = !self.show_grid;
     }
 }

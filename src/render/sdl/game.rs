@@ -25,10 +25,7 @@ impl<'a> Game<'a> {
         timer: Timer,
         state: State,
     ) -> Self {
-        let game_state = GameState {
-            running: false,
-            show_help: false,
-        };
+        let game_state = GameState::default();
 
         Game {
             actions: Vec::new(),
@@ -65,6 +62,7 @@ impl<'a> Game<'a> {
                 Action::Pause => self.game_state.pause(),
                 Action::PlayPause => self.game_state.toggle(),
                 Action::ShowHelp => self.game_state.help(),
+                Action::ToggleGrid => self.game_state.toggle_grid(),
             }
         }
 

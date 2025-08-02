@@ -8,6 +8,7 @@ pub enum PollResult {
 pub enum Action {
     Pause,
     PlayPause,
+    ToggleGrid,
     ShowHelp,
 }
 
@@ -20,25 +21,19 @@ impl EventHandler {
         EventHandler { event_pump }
     }
 
+    #[rustfmt::skip]
     pub fn poll(&mut self, actions: &mut Vec<Action>) -> PollResult {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => return PollResult::Quit,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => return PollResult::Quit,
-                Event::KeyDown {
-                    keycode: Some(Keycode::H),
-                    ..
-                } => {
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => return PollResult::Quit,
+                Event::KeyDown { keycode: Some(Keycode::Space), .. } => actions.push(Action::PlayPause),
+                Event::KeyDown { keycode: Some(Keycode::QUOTE), .. } => actions.push(Action::ToggleGrid),
+
+                Event::KeyDown { keycode: Some(Keycode::H), .. } => {
                     actions.push(Action::Pause);
                     actions.push(Action::ShowHelp);
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Space),
-                    ..
-                } => actions.push(Action::PlayPause),
                 _ => {}
             }
         }
