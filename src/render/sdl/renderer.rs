@@ -15,13 +15,13 @@ use sdl2::{
 
 const COLOR_DEAD: Color = Color::RGB(0x00, 0x00, 0x00);
 
-pub struct RenderingContext<'a, 'b, 'c, 'd> {
+pub struct RenderingContext<'a, 'b> {
     pub(crate) canvas: &'a mut Canvas<Window>,
-    pub(crate) font: &'a Font<'b, 'b>,
+    pub(crate) font: &'a Font<'a, 'a>,
     pub(crate) layout: &'a Layout,
     pub(crate) texture_creator: &'a TextureCreator<WindowContext>,
-    pub(crate) state: &'c State,
-    pub(crate) game_state: &'d GameState,
+    pub(crate) state: &'b State,
+    pub(crate) game_state: &'b GameState,
 }
 
 pub struct Renderer<'a> {
