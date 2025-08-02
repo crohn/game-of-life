@@ -1,5 +1,5 @@
 use crate::{
-    core::State,
+    core::{Coords, State},
     render::sdl::{event_handler::PollResult, game_state::GameState},
 };
 
@@ -62,6 +62,14 @@ impl<'a> Game<'a> {
                 Action::Pause => self.game_state.pause(),
                 Action::PlayPause => self.game_state.toggle(),
                 Action::ShowHelp => self.game_state.help(),
+                Action::ToggleCell(x, y) => {
+                    let scale = self.renderer.layout.scale;
+                    let coords = Coords {
+                        x: x / scale as i32,
+                        y: y / scale as i32,
+                    };
+                    self.state.toggle_cell(coords);
+                }
                 Action::ToggleGrid => self.game_state.toggle_grid(),
             }
         }

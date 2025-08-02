@@ -27,7 +27,7 @@ pub struct RenderingContext<'a, 'b> {
 pub struct Renderer<'a> {
     canvas: Canvas<Window>,
     font: Font<'a, 'a>,
-    layout: Layout,
+    pub(crate) layout: Layout,
     texture_creator: TextureCreator<WindowContext>,
     widgets: Vec<Box<dyn Widget>>,
 }

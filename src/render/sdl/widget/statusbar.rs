@@ -2,7 +2,7 @@ use sdl2::{pixels::Color, rect::Rect};
 
 use crate::render::sdl::{renderer::RenderingContext, widget::Widget};
 
-const COLOR_STATUSBAR_BG: Color = Color::RGB(0x00, 0x00, 0xff);
+const COLOR_STATUSBAR_BG: Color = Color::RGB(0x78, 0xb9, 0xbf);
 const COLOR_STATUSBAR_FG: Color = Color::RGB(0x00, 0x00, 0x00);
 
 pub struct StatusBar {}
