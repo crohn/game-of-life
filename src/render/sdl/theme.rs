@@ -16,6 +16,7 @@ pub struct Palette {
     pub(crate) bg: Color,
     pub(crate) cell_alive: Color,
     pub(crate) cell_dead: Color,
+    pub(crate) cell_selected: Color,
     // pub(crate) help_bg: Color,
     pub(crate) cmdline_bg: Color,
     pub(crate) cmdline_text: Color,
@@ -28,11 +29,12 @@ impl Default for Palette {
         Palette {
             bg: Color::RGBA(0x00, 0x00, 0x00, 0xff),
             cell_alive: Color::RGBA(0xff, 0xff, 0xff, 0xff),
-            cell_dead: Color::RGBA(0x22, 0x22, 0x22, 0xff),
+            cell_dead: Color::RGBA(0x22, 0x22, 0x32, 0xff),
+            cell_selected: Color::RGBA(0xff, 0x00, 0xff, 0xff),
             // help_bg: Color::RGBA(0x00, 0x00, 0x00, 0x9a),
             cmdline_bg: Color::RGBA(0x00, 0x00, 0x00, 0xff),
             cmdline_text: Color::RGBA(0xff, 0xff, 0xff, 0xff),
-            status_bg: Color::RGBA(0x78, 0xb9, 0xbf, 0xff),
+            status_bg: Color::RGBA(0x78, 0x9f, 0xbf, 0xff),
             status_text: Color::RGBA(0x00, 0x00, 0x00, 0xff),
         }
     }
