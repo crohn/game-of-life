@@ -4,18 +4,10 @@ use crate::{
     render::sdl::{
         game_state::GameState,
         theme::Theme,
-        widget::{
-            Widget,
-            cmdline::Cmdline,
-            pane::{Border, Pane},
-            statusbar::Statusbar,
-            text::Text,
-        },
+        widget::{Widget, board::Board, cmdline::Cmdline, statusbar::Statusbar},
     },
 };
 use sdl2::{
-    pixels::Color,
-    rect::Rect,
     render::{Canvas, TextureCreator},
     ttf::Font,
     video::{Window, WindowContext},
@@ -45,20 +37,7 @@ impl<'a> Renderer<'a> {
         let texture_creator = canvas.texture_creator();
         let theme = Theme::default();
         let widgets: Vec<Box<dyn Widget>> = vec![
-            Box::new(Pane {
-                color: Color::RGB(0xff, 0x00, 0x00),
-                rect: layout.board,
-                border: Some(Border {
-                    color: Color::RGB(0x00, 0x00, 0x00),
-                    thickness: 10,
-                }),
-                child: Some(Box::new(Text {
-                    color: Color::RGB(0xff, 0xff, 0xff),
-                    text: "Hello world",
-                    x: 4,
-                    y: 4,
-                })),
-            }),
+            Box::new(Board {}),
             Box::new(Statusbar {}),
             Box::new(Cmdline {}),
         ];

@@ -63,7 +63,7 @@ impl<'a> Game<'a> {
                 Action::PlayPause => self.game_state.toggle(),
                 Action::ShowHelp => self.game_state.help(),
                 Action::ToggleCell(x, y) => {
-                    let scale = 10; // self.renderer.layout.scale;
+                    let scale = self.renderer.layout.scale;
                     let coords = Coords {
                         x: x / scale as i32,
                         y: y / scale as i32,
