@@ -71,6 +71,11 @@ impl State {
         mem::swap(&mut self.curr, &mut self.next);
     }
 
+    pub fn get_cell(&self, coords: &Coords) -> Cell {
+        let index = coords.to_index(self.cols, self.rows);
+        self.curr[index]
+    }
+
     /// Updates current board's cell state to match provided coordinates and
     /// cell.
     pub fn set_cell(&mut self, coords: Coords, value: Cell) {
@@ -78,7 +83,7 @@ impl State {
         self.curr[index] = value;
     }
 
-    pub fn toggle_cell(&mut self, coords: Coords) {
+    pub fn toggle_cell(&mut self, coords: &Coords) {
         let index = coords.to_index(self.cols, self.rows);
         self.curr[index].toggle();
     }
