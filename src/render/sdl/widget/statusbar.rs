@@ -1,9 +1,6 @@
-use sdl2::{pixels::Color, rect::Rect};
+use sdl2::rect::Rect;
 
 use crate::render::sdl::{renderer::RenderingContext, widget::Widget};
-
-const COLOR_STATUSBAR_BG: Color = Color::RGB(0x78, 0xb9, 0xbf);
-const COLOR_STATUSBAR_FG: Color = Color::RGB(0x00, 0x00, 0x00);
 
 pub struct StatusBar {}
 impl StatusBar {
@@ -15,7 +12,7 @@ impl StatusBar {
             ctx.layout.statbar.h,
         );
 
-        ctx.canvas.set_draw_color(COLOR_STATUSBAR_BG);
+        ctx.canvas.set_draw_color(ctx.theme.palette.status_bg);
         ctx.canvas.fill_rect(rect)
     }
 
@@ -25,7 +22,7 @@ impl StatusBar {
         let surface = ctx
             .font
             .render(if running { "<Running>" } else { "<Paused>" })
-            .solid(COLOR_STATUSBAR_FG)
+            .solid(ctx.theme.palette.status_text)
             .map_err(|e| e.to_string())?;
 
         let text_width = surface.width();

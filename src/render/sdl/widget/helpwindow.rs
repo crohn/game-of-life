@@ -1,4 +1,4 @@
-use sdl2::{pixels::Color, rect::Rect};
+use sdl2::rect::Rect;
 
 use crate::render::sdl::{renderer::RenderingContext, widget::Widget};
 
@@ -21,8 +21,7 @@ impl Widget for HelpWindow {
         let blend_mode = ctx.canvas.blend_mode();
         ctx.canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-        ctx.canvas
-            .set_draw_color(Color::RGBA(0xff, 0xff, 0xff, 0x7f));
+        ctx.canvas.set_draw_color(ctx.theme.palette.help_bg);
         ctx.canvas.fill_rect(rect)?;
 
         ctx.canvas.set_blend_mode(blend_mode);

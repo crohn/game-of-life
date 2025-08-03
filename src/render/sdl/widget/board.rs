@@ -1,4 +1,4 @@
-use sdl2::{pixels::Color, rect::Rect};
+use sdl2::rect::Rect;
 
 use crate::{
     core::{Cell, coords_from_index},
@@ -7,15 +7,13 @@ use crate::{
 
 use super::Widget;
 
-const COLOR_ALIVE: Color = Color::RGB(0xff, 0xff, 0xff);
-
 pub struct Board {}
 impl Widget for Board {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
         let scale = ctx.layout.scale;
         let grid = if ctx.game_state.show_grid { 1 } else { 0 };
 
-        ctx.canvas.set_draw_color(COLOR_ALIVE); // TODO move to theme
+        ctx.canvas.set_draw_color(ctx.theme.palette.cell_alive);
         for (i, cell) in ctx.state.curr.iter().enumerate() {
             let coords = coords_from_index(i, ctx.state.cols);
             let rect = Rect::new(

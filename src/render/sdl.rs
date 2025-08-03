@@ -1,6 +1,7 @@
 pub mod game;
 pub mod layout;
 pub mod renderer;
+pub mod theme;
 pub mod timer;
 pub mod widget;
 

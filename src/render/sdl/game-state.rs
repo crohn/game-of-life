@@ -8,7 +8,7 @@ impl Default for GameState {
     fn default() -> Self {
         Self {
             running: false,
-            show_grid: false,
+            show_grid: true,
             show_help: false,
         }
     }
