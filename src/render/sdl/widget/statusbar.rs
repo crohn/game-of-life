@@ -1,51 +1,45 @@
+use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
-use crate::render::sdl::{renderer::RenderingContext, widget::Widget};
+use crate::render::sdl::renderer::RenderingContext;
+use crate::render::sdl::widget::Widget;
+use crate::render::sdl::widget::pane::Pane;
+use crate::render::sdl::widget::text::Text;
 
-pub struct StatusBar {}
-impl StatusBar {
-    fn render_bar(&self, ctx: &mut RenderingContext) -> Result<(), String> {
-        let rect = Rect::new(
-            ctx.layout.statbar.x as i32,
-            ctx.layout.statbar.y as i32,
-            ctx.layout.statbar.w,
-            ctx.layout.statbar.h,
-        );
+const TEXT_PAUSED: &str = "<PAUSED>";
+const TEXT_RUNNING: &str = "<RUNNING>";
 
-        ctx.canvas.set_draw_color(ctx.theme.palette.status_bg);
-        ctx.canvas.fill_rect(rect)
+pub struct Statusbar {}
+
+impl Statusbar {
+    fn status_text(&self, running: bool) -> &'static str {
+        if running { TEXT_RUNNING } else { TEXT_PAUSED }
     }
 
-    fn render_text(&self, ctx: &mut RenderingContext) -> Result<(), String> {
-        let running = ctx.game_state.running;
+    fn create_textbox(&self, text: &'static str, color: Color) -> Option<Box<dyn Widget>> {
+        Some(Box::new(Text {
+            text,
+            color,
+            x: 4,
+            y: 2,
+        }))
+    }
 
-        let surface = ctx
-            .font
-            .render(if running { "<Running>" } else { "<Paused>" })
-            .solid(ctx.theme.palette.status_text)
-            .map_err(|e| e.to_string())?;
-
-        let text_width = surface.width();
-
-        let texture = ctx
-            .texture_creator
-            .create_texture_from_surface(surface)
-            .map_err(|e| e.to_string())?;
-
-        let rect = Rect::new(
-            ctx.layout.statbar.x as i32 + 4,
-            ctx.layout.statbar.y as i32,
-            text_width,
-            ctx.layout.statbar.h,
-        );
-
-        ctx.canvas.copy(&texture, None, rect)
+    fn create_pane(&self, layout: Rect, color: Color, child: Option<Box<dyn Widget>>) -> Pane {
+        Pane {
+            rect: layout,
+            color,
+            border: None,
+            child,
+        }
     }
 }
 
-impl Widget for StatusBar {
+impl Widget for Statusbar {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
-        self.render_bar(ctx)?;
-        self.render_text(ctx)
+        let text = self.status_text(ctx.game_state.running);
+        let child = self.create_textbox(text, ctx.theme.palette.status_text);
+        let pane = self.create_pane(ctx.layout.statusbar, ctx.theme.palette.status_bg, child);
+        pane.render(ctx)
     }
 }

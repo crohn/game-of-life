@@ -4,8 +4,7 @@ pub trait Widget {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String>;
 }
 
-pub mod board;
-pub mod helpwindow;
+pub mod cmdline;
 pub mod pane;
 pub mod statusbar;
 pub mod text;

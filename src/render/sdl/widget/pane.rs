@@ -7,14 +7,14 @@ pub struct Border {
     pub(crate) thickness: u32,
 }
 
-pub struct Pane {
+pub struct Pane<'a> {
     pub(crate) rect: Rect,
     pub(crate) color: Color,
     pub(crate) border: Option<Border>,
-    pub(crate) child: Option<Box<dyn Widget>>,
+    pub(crate) child: Option<Box<dyn Widget + 'a>>,
 }
 
-impl Pane {
+impl<'a> Pane<'a> {
     // Renders the border as an outer Rect, returning a new one to be used as
     // actual content.
     //
@@ -37,7 +37,7 @@ impl Pane {
     }
 }
 
-impl Widget for Pane {
+impl<'a> Widget for Pane<'a> {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
         let inner_rect = self.render_border(ctx)?;
 

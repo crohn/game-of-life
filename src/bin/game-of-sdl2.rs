@@ -7,7 +7,7 @@ use game_of_life::{
 
 const COLS: u32 = 80;
 const ROWS: u32 = 25;
-const SCALE: u32 = 10;
+// const SCALE: u32 = 10;
 
 const FPS: u64 = 30;
 
@@ -19,8 +19,9 @@ fn main() -> Result<(), String> {
         rows: ROWS,
     };
 
-    let layout = Layout::new(&config, SCALE);
-    let window = layout.window_geometry();
+    // let layout = Layout::new(&config, SCALE);
+    let layout = Layout::new(800);
+    // let window = layout.window_geometry();
 
     let sdl_ctx = sdl2::init()?;
     let ttf_ctx = sdl2::ttf::init()?;
@@ -32,7 +33,7 @@ fn main() -> Result<(), String> {
     let font = ttf_ctx.load_font("./Monaco.ttf", FONT_SIZE)?;
 
     let window = video_sys
-        .window("game-of-sdl2", window.w, window.h)
+        .window("game-of-sdl2", 800, 290)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;

@@ -1,7 +1,8 @@
 pub struct GameState {
-    pub running: bool,
-    pub show_grid: bool,
-    pub show_help: bool,
+    pub(crate) running: bool,
+    pub(crate) show_grid: bool,
+    pub(crate) show_help: bool,
+    pub(crate) command: Option<String>,
 }
 
 impl Default for GameState {
@@ -10,6 +11,7 @@ impl Default for GameState {
             running: false,
             show_grid: true,
             show_help: false,
+            command: None,
         }
     }
 }
