@@ -12,11 +12,15 @@ const TEXT_RUNNING: &str = "<RUNNING>";
 pub struct Statusbar {}
 
 impl Statusbar {
-    fn status_text(&self, running: bool) -> &'static str {
-        if running { TEXT_RUNNING } else { TEXT_PAUSED }
+    fn status_text(&self, running: bool, generation: u32) -> String {
+        format!(
+            "{} - {}",
+            if running { TEXT_RUNNING } else { TEXT_PAUSED },
+            generation
+        )
     }
 
-    fn create_textbox(&self, text: &'static str, color: Color) -> Option<Box<dyn Widget>> {
+    fn create_textbox<'a>(&self, text: &'a str, color: Color) -> Option<Box<dyn Widget + 'a>> {
         Some(Box::new(Text {
             text,
             color,
@@ -25,7 +29,12 @@ impl Statusbar {
         }))
     }
 
-    fn create_pane(&self, layout: Rect, color: Color, child: Option<Box<dyn Widget>>) -> Pane {
+    fn create_pane<'a>(
+        &self,
+        layout: Rect,
+        color: Color,
+        child: Option<Box<dyn Widget + 'a>>,
+    ) -> Pane<'a> {
         Pane {
             rect: layout,
             color,
@@ -37,8 +46,8 @@ impl Statusbar {
 
 impl Widget for Statusbar {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
-        let text = self.status_text(ctx.game_state.running);
-        let child = self.create_textbox(text, ctx.theme.palette.status_text);
+        let text = self.status_text(ctx.game_state.running, ctx.state.generation);
+        let child = self.create_textbox(text.as_str(), ctx.theme.palette.status_text);
         let pane = self.create_pane(ctx.layout.statusbar, ctx.theme.palette.status_bg, child);
         pane.render(ctx)
     }
