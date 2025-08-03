@@ -11,6 +11,12 @@ pub enum Action {
     ShowHelp,
     ToggleCell(i32, i32),
     ToggleGrid,
+    Deselect,
+    SelectUp,
+    SelectRight,
+    SelectDown,
+    SelectLeft,
+    Toggle,
 }
 
 pub struct EventHandler {
@@ -22,6 +28,7 @@ impl EventHandler {
         EventHandler { event_pump }
     }
 
+    // : enters cmd mode
     #[rustfmt::skip]
     pub fn poll(&mut self, actions: &mut Vec<Action>) -> PollResult {
         for event in self.event_pump.poll_iter() {
@@ -35,6 +42,12 @@ impl EventHandler {
                     actions.push(Action::Pause);
                     actions.push(Action::ShowHelp);
                 }
+                Event::KeyDown { keycode: Some(Keycode::X), ..} => actions.push(Action::Deselect),
+                Event::KeyDown { keycode: Some(Keycode::S), ..} => actions.push(Action::Toggle),
+                Event::KeyDown { keycode: Some(Keycode::UP), ..} => actions.push(Action::SelectUp),
+                Event::KeyDown { keycode: Some(Keycode::RIGHT), ..} => actions.push(Action::SelectRight),
+                Event::KeyDown { keycode: Some(Keycode::DOWN), ..} => actions.push(Action::SelectDown),
+                Event::KeyDown { keycode: Some(Keycode::LEFT), ..} => actions.push(Action::SelectLeft),
 
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     actions.push(Action::ToggleCell(x, y))

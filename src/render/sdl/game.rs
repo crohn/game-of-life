@@ -68,9 +68,31 @@ impl<'a> Game<'a> {
                         x: x / scale as i32,
                         y: y / scale as i32,
                     };
-                    self.state.toggle_cell(coords);
+                    self.state.toggle_cell(&coords);
                 }
                 Action::ToggleGrid => self.game_state.toggle_grid(),
+                Action::Deselect => self.game_state.deselect_cell(),
+                Action::SelectUp => {
+                    self.game_state
+                        .select_cell(0, -1, self.state.cols, self.state.rows)
+                }
+                Action::SelectRight => {
+                    self.game_state
+                        .select_cell(1, 0, self.state.cols, self.state.rows)
+                }
+                Action::SelectDown => {
+                    self.game_state
+                        .select_cell(0, 1, self.state.cols, self.state.rows)
+                }
+                Action::SelectLeft => {
+                    self.game_state
+                        .select_cell(-1, 0, self.state.cols, self.state.rows)
+                }
+                Action::Toggle => {
+                    if let Some(coords) = &self.game_state.selected_cell {
+                        self.state.toggle_cell(coords);
+                    }
+                }
             }
         }
 
