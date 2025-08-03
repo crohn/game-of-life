@@ -4,14 +4,37 @@ use crate::{
     render::sdl::{
         game_state::GameState,
         theme::Theme,
-        widget::{Widget, board::Board, helpwindow::HelpWindow, statusbar::StatusBar},
+        widget::{
+            Widget,
+            pane::{Border, Pane},
+            text::Text,
+        },
     },
 };
 use sdl2::{
+    pixels::Color,
+    rect::Rect,
     render::{Canvas, TextureCreator},
     ttf::Font,
     video::{Window, WindowContext},
 };
+
+struct NewLayout {
+    pub board: Rect,
+    pub statusbar: Rect,
+    pub cmdline: Rect,
+}
+
+impl NewLayout {
+    #[rustfmt::skip]
+    pub fn new() -> Self {
+        let board = Rect::new(0, 0, 800, 250);
+        let statusbar = Rect::new(0, 250, 800, 20);
+        let cmdline = Rect::new(0, 270, 800, 20);
+
+        NewLayout { board, statusbar, cmdline }
+    }
+}
 
 pub struct RenderingContext<'a, 'b> {
     pub(crate) canvas: &'a mut Canvas<Window>,
@@ -34,12 +57,45 @@ pub struct Renderer<'a> {
 
 impl<'a> Renderer<'a> {
     pub fn new(layout: Layout, canvas: Canvas<Window>, font: Font<'a, 'a>) -> Self {
+        let l = NewLayout::new();
+
         let texture_creator = canvas.texture_creator();
         let theme = Theme::default();
         let widgets: Vec<Box<dyn Widget>> = vec![
-            Box::new(Board {}),
-            Box::new(StatusBar {}),
-            Box::new(HelpWindow {}),
+            Box::new(Pane {
+                color: Color::RGB(0xff, 0x00, 0x00),
+                rect: l.board,
+                border: Some(Border {
+                    color: Color::RGB(0x00, 0x00, 0x00),
+                    thickness: 10,
+                }),
+                child: Some(Box::new(Text {
+                    color: Color::RGB(0xff, 0xff, 0xff),
+                    text: "Hello world",
+                    x: 4,
+                    y: 4,
+                })),
+            }),
+            Box::new(Pane {
+                color: Color::RGB(0x00, 0xff, 0x00),
+                rect: l.statusbar,
+                border: None,
+                child: Some(Box::new(Pane {
+                    color: Color::RGB(0xff, 0xff, 0xff),
+                    rect: Rect::new(0, 0, 100, 100),
+                    border: None,
+                    child: None,
+                })),
+            }),
+            Box::new(Pane {
+                color: Color::RGB(0x00, 0x00, 0xff),
+                rect: l.cmdline,
+                border: None,
+                child: None,
+            }),
+            // Box::new(Board {}),
+            // Box::new(StatusBar {}),
+            // Box::new(HelpWindow {}),
         ];
 
         Renderer {

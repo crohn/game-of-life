@@ -6,4 +6,6 @@ pub trait Widget {
 
 pub mod board;
 pub mod helpwindow;
+pub mod pane;
 pub mod statusbar;
+pub mod text;
