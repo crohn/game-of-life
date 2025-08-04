@@ -96,6 +96,16 @@ impl<'a> Game<'a> {
                 }
                 Action::SpeedIncr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms - 33).max(33),
                 Action::SpeedDecr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330),
+
+                Action::CommandAppend(s) => self.game_state.command.get_or_insert_default().push_str(s),
+                Action::CommandPop => {
+                    if let Some(command) = &mut self.game_state.command {
+                        if command.len() > 1 {
+                            command.pop();
+                        }
+                    }
+                },
+                Action::CommandCancel => self.game_state.command = None,
             }
         }
     }
