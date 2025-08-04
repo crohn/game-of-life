@@ -17,7 +17,6 @@ pub struct Game<'a> {
     state: State,
     timer: Timer,
     //
-    sim_perio_ms: u64,
     timer_acc_ms: u64,
 }
 
@@ -37,7 +36,6 @@ impl<'a> Game<'a> {
             renderer,
             state,
             timer,
-            sim_perio_ms: 33,
             timer_acc_ms: 0,
         }
     }
@@ -55,11 +53,11 @@ impl<'a> Game<'a> {
 
             self.update();
 
-            while self.timer_acc_ms >= self.sim_perio_ms {
+            while self.timer_acc_ms >= self.game_state.sim_period_ms {
                 if self.game_state.running {
                     self.state.next();
                 }
-                self.timer_acc_ms -= self.sim_perio_ms;
+                self.timer_acc_ms -= self.game_state.sim_period_ms;
             }
 
             self.renderer.draw(&self.state, &self.game_state)?;
@@ -70,6 +68,7 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
+    #[rustfmt::skip]
     fn update(&mut self) {
         for action in &self.actions {
             match action {
@@ -86,27 +85,17 @@ impl<'a> Game<'a> {
                 }
                 Action::ToggleGrid => self.game_state.toggle_grid(),
                 Action::Deselect => self.game_state.deselect_cell(),
-                Action::SelectUp => {
-                    self.game_state
-                        .select_cell(0, -1, self.state.cols, self.state.rows)
-                }
-                Action::SelectRight => {
-                    self.game_state
-                        .select_cell(1, 0, self.state.cols, self.state.rows)
-                }
-                Action::SelectDown => {
-                    self.game_state
-                        .select_cell(0, 1, self.state.cols, self.state.rows)
-                }
-                Action::SelectLeft => {
-                    self.game_state
-                        .select_cell(-1, 0, self.state.cols, self.state.rows)
-                }
+                Action::SelectUp => self.game_state.select_cell(0, -1, self.state.cols, self.state.rows),
+                Action::SelectRight => self.game_state.select_cell(1, 0, self.state.cols, self.state.rows),
+                Action::SelectDown =>  self.game_state.select_cell(0, 1, self.state.cols, self.state.rows),
+                Action::SelectLeft =>  self.game_state.select_cell(-1, 0, self.state.cols, self.state.rows),
                 Action::Toggle => {
                     if let Some(coords) = &self.game_state.selected_cell {
                         self.state.toggle_cell(coords);
                     }
                 }
+                Action::SpeedIncr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms / 2).max(33),
+                Action::SpeedDecr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms * 2).min(330),
             }
         }
     }

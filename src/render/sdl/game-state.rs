@@ -6,6 +6,7 @@ pub struct GameState {
     pub(crate) show_help: bool,
     pub(crate) command: Option<String>,
     pub(crate) selected_cell: Option<Coords>,
+    pub(crate) sim_period_ms: u64,
 }
 
 impl Default for GameState {
@@ -16,6 +17,7 @@ impl Default for GameState {
             show_help: false,
             command: None,
             selected_cell: None,
+            sim_period_ms: 33,
         }
     }
 }

@@ -1,4 +1,9 @@
-use sdl2::{EventPump, event::Event, keyboard::Keycode, mouse::MouseButton};
+use sdl2::{
+    EventPump,
+    event::Event,
+    keyboard::{Keycode, Mod},
+    mouse::MouseButton,
+};
 
 pub enum PollResult {
     Continue,
@@ -17,6 +22,8 @@ pub enum Action {
     SelectDown,
     SelectLeft,
     Toggle,
+    SpeedIncr,
+    SpeedDecr,
 }
 
 pub struct EventHandler {
@@ -42,12 +49,18 @@ impl EventHandler {
                 //     actions.push(Action::Pause);
                 //     actions.push(Action::ShowHelp);
                 // }
-                Event::KeyDown { keycode: Some(Keycode::X), ..} => actions.push(Action::Deselect),
-                Event::KeyDown { keycode: Some(Keycode::S), ..} => actions.push(Action::Toggle),
-                Event::KeyDown { keycode: Some(Keycode::UP    | Keycode::K), ..} => actions.push(Action::SelectUp),
-                Event::KeyDown { keycode: Some(Keycode::RIGHT | Keycode::L), ..} => actions.push(Action::SelectRight),
-                Event::KeyDown { keycode: Some(Keycode::DOWN  | Keycode::J), ..} => actions.push(Action::SelectDown),
-                Event::KeyDown { keycode: Some(Keycode::LEFT  | Keycode::H), ..} => actions.push(Action::SelectLeft),
+                Event::KeyDown { keycode: Some(Keycode::X), .. } => actions.push(Action::Deselect),
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => actions.push(Action::Toggle),
+                Event::KeyDown { keycode: Some(Keycode::UP    | Keycode::K), .. } => actions.push(Action::SelectUp),
+                Event::KeyDown { keycode: Some(Keycode::RIGHT | Keycode::L), .. } => actions.push(Action::SelectRight),
+                Event::KeyDown { keycode: Some(Keycode::DOWN  | Keycode::J), .. } => actions.push(Action::SelectDown),
+                Event::KeyDown { keycode: Some(Keycode::LEFT  | Keycode::H), .. } => actions.push(Action::SelectLeft),
+
+                Event::KeyDown { keycode: Some(Keycode::MINUS), .. } => actions.push(Action::SpeedDecr),
+                // it would be probably more appropriate to switch controls to
+                // scancode, because for example keycode PLUS is not caught,
+                // while the combination of LShift+EQUALS is.
+                Event::KeyDown { keycode: Some(Keycode::EQUALS), keymod: Mod::LSHIFTMOD, .. } => actions.push(Action::SpeedIncr),
 
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     actions.push(Action::ToggleCell(x, y))
