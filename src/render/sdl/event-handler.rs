@@ -38,16 +38,16 @@ impl EventHandler {
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => return PollResult::Quit,
                 Event::KeyDown { keycode: Some(Keycode::Space), .. } => actions.push(Action::PlayPause),
                 Event::KeyDown { keycode: Some(Keycode::QUOTE), .. } => actions.push(Action::ToggleGrid),
-                Event::KeyDown { keycode: Some(Keycode::H), .. } => {
-                    actions.push(Action::Pause);
-                    actions.push(Action::ShowHelp);
-                }
+                // Event::KeyDown { keycode: Some(Keycode::H), .. } => {
+                //     actions.push(Action::Pause);
+                //     actions.push(Action::ShowHelp);
+                // }
                 Event::KeyDown { keycode: Some(Keycode::X), ..} => actions.push(Action::Deselect),
                 Event::KeyDown { keycode: Some(Keycode::S), ..} => actions.push(Action::Toggle),
-                Event::KeyDown { keycode: Some(Keycode::UP), ..} => actions.push(Action::SelectUp),
-                Event::KeyDown { keycode: Some(Keycode::RIGHT), ..} => actions.push(Action::SelectRight),
-                Event::KeyDown { keycode: Some(Keycode::DOWN), ..} => actions.push(Action::SelectDown),
-                Event::KeyDown { keycode: Some(Keycode::LEFT), ..} => actions.push(Action::SelectLeft),
+                Event::KeyDown { keycode: Some(Keycode::UP    | Keycode::K), ..} => actions.push(Action::SelectUp),
+                Event::KeyDown { keycode: Some(Keycode::RIGHT | Keycode::L), ..} => actions.push(Action::SelectRight),
+                Event::KeyDown { keycode: Some(Keycode::DOWN  | Keycode::J), ..} => actions.push(Action::SelectDown),
+                Event::KeyDown { keycode: Some(Keycode::LEFT  | Keycode::H), ..} => actions.push(Action::SelectLeft),
 
                 Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => {
                     actions.push(Action::ToggleCell(x, y))
