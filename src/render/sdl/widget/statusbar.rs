@@ -41,13 +41,14 @@ impl Statusbar {
 
     fn text_coords(game_state: &GameState, state: &State) -> Option<String> {
         if let Some(selected) = &game_state.selected_cell {
-            let mut str = format!("({},{}) -> ", selected.x, selected.y);
             let cell_state = match state.get_cell(&selected) {
                 Cell::Alive => CELL_ALIVE,
                 Cell::Dead => CELL_DEAD,
             };
-            str.push_str(cell_state);
-            Some(str)
+            Some(format!(
+                " ({},{}) -> {}",
+                selected.x, selected.y, cell_state
+            ))
         } else {
             None
         }
@@ -58,9 +59,7 @@ impl Statusbar {
     }
 
     fn text_period(game_state: &GameState) -> String {
-        let mut str = game_state.sim_period_ms.to_string();
-        str.push_str(" ms");
-        str
+        format!("{} ms", game_state.sim_period_ms)
     }
 
     fn text_running(game_state: &GameState) -> &str {
@@ -81,7 +80,6 @@ impl Widget for Statusbar {
 
         let mut text = format!("{} {} {}", text_running, text_generation, text_period);
         if let Some(coords) = text_coords {
-            text.push(' ');
             text.push_str(coords.as_str());
         }
 
