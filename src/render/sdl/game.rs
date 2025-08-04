@@ -16,6 +16,9 @@ pub struct Game<'a> {
     renderer: Renderer<'a>,
     state: State,
     timer: Timer,
+    //
+    sim_perio_ms: u64,
+    timer_acc_ms: u64,
 }
 
 impl<'a> Game<'a> {
@@ -34,6 +37,8 @@ impl<'a> Game<'a> {
             renderer,
             state,
             timer,
+            sim_perio_ms: 33,
+            timer_acc_ms: 0,
         }
     }
 
@@ -41,12 +46,21 @@ impl<'a> Game<'a> {
         'running: loop {
             self.timer.start();
 
+            self.timer_acc_ms += self.timer.frame_duration;
+
             self.actions.clear();
             let PollResult::Continue = self.event_handler.poll(&mut self.actions) else {
                 break 'running;
             };
 
             self.update();
+
+            while self.timer_acc_ms >= self.sim_perio_ms {
+                if self.game_state.running {
+                    self.state.next();
+                }
+                self.timer_acc_ms -= self.sim_perio_ms;
+            }
 
             self.renderer.draw(&self.state, &self.game_state)?;
 
@@ -94,10 +108,6 @@ impl<'a> Game<'a> {
                     }
                 }
             }
-        }
-
-        if self.game_state.running {
-            self.state.next();
         }
     }
 }
