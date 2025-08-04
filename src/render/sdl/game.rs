@@ -94,8 +94,8 @@ impl<'a> Game<'a> {
                         self.state.toggle_cell(coords);
                     }
                 }
-                Action::SpeedIncr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms / 2).max(33),
-                Action::SpeedDecr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms * 2).min(330),
+                Action::SpeedIncr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms - 33).max(33),
+                Action::SpeedDecr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330),
             }
         }
     }

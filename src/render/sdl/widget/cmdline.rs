@@ -6,10 +6,10 @@ use crate::render::sdl::widget::Widget;
 use crate::render::sdl::widget::pane::Pane;
 use crate::render::sdl::widget::text::Text;
 
-pub struct Cmdline {}
+pub struct Cmdline;
 
 impl Cmdline {
-    fn create_textbox<'a>(&self, text: &'a str, color: Color) -> Box<dyn Widget + 'a> {
+    fn create_textbox<'a>(text: &'a str, color: Color) -> Box<dyn Widget + 'a> {
         Box::new(Text {
             text,
             color,
@@ -19,7 +19,6 @@ impl Cmdline {
     }
 
     fn create_pane<'a>(
-        &self,
         layout: Rect,
         color: Color,
         child: Option<Box<dyn Widget + 'a>>,
@@ -36,8 +35,8 @@ impl Cmdline {
 impl Widget for Cmdline {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
         let text: Option<&str> = ctx.game_state.command.as_deref();
-        let child = text.map(|t| self.create_textbox(t, ctx.theme.palette.cmdline_text));
-        let pane = self.create_pane(ctx.layout.cmdline, ctx.theme.palette.cmdline_bg, child);
+        let child = text.map(|t| Self::create_textbox(t, ctx.theme.palette.cmdline_text));
+        let pane = Self::create_pane(ctx.layout.cmdline, ctx.theme.palette.cmdline_bg, child);
         pane.render(ctx)
     }
 }

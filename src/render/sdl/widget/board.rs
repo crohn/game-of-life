@@ -4,7 +4,7 @@ use crate::core::{Cell, coords_from_index};
 use crate::render::sdl::renderer::RenderingContext;
 use crate::render::sdl::widget::Widget;
 
-pub struct Board {}
+pub struct Board;
 
 impl Widget for Board {
     fn render(&self, ctx: &mut RenderingContext) -> Result<(), String> {
