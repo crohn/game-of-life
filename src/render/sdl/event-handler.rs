@@ -16,23 +16,23 @@ pub enum Mode {
 }
 
 pub enum Action {
-    Pause,
-    PlayPause,
-    ShowHelp,
-    ToggleCell(i32, i32),
-    ToggleGrid,
-    Deselect,
-    SelectUp,
-    SelectRight,
-    SelectDown,
-    SelectLeft,
-    Toggle,
-    SpeedIncr,
-    SpeedDecr,
-    CommandCancel,
-    CommandAppend(String),
-    CommandPop,
     SwitchMode(Mode),
+    // Command
+    AppendCommandChar(String),
+    CancelCommand,
+    DelCommandChar,
+    // Normal
+    CursorDown,
+    CursorLeft,
+    CursorRight,
+    CursorUp,
+    HideCursor,
+    PlayPause,
+    SpeedDecrease,
+    SpeedIncrease,
+    ToggleClickedCell(i32, i32),
+    ToggleCursorCell,
+    ToggleGrid,
 }
 
 pub struct EventHandler {
@@ -48,58 +48,79 @@ impl EventHandler {
         }
     }
 
-    // : enters cmd mode
-    #[rustfmt::skip]
     pub fn poll(&mut self, actions: &mut Vec<Action>) -> PollResult {
         for event in self.event_pump.poll_iter() {
-            match self.mode {
-                Mode::Normal => {
-                    match event {
-                        Event::Quit { .. } => return PollResult::Quit,
+            if let PollResult::Quit = match self.mode {
+                Mode::Command => Self::handle_event_command(event, actions),
+                Mode::Normal => Self::handle_event_normal(event, actions),
+            } {
+                return PollResult::Quit;
+            }
+        }
+        PollResult::Continue
+    }
 
-                        Event::KeyDown { keycode: Some(Keycode::Escape), .. } => return PollResult::Quit,
-                        Event::KeyDown { keycode: Some(Keycode::Space), .. } => actions.push(Action::PlayPause),
-                        Event::KeyDown { keycode: Some(Keycode::QUOTE), .. } => actions.push(Action::ToggleGrid),
-                        // Event::KeyDown { keycode: Some(Keycode::H), .. } => {
-                        //     actions.push(Action::Pause);
-                        //     actions.push(Action::ShowHelp);
-                        // }
-                        Event::KeyDown { keycode: Some(Keycode::X), .. } => actions.push(Action::Deselect),
-                        Event::KeyDown { keycode: Some(Keycode::S), .. } => actions.push(Action::Toggle),
-                        Event::KeyDown { keycode: Some(Keycode::UP    | Keycode::K), .. } => actions.push(Action::SelectUp),
-                        Event::KeyDown { keycode: Some(Keycode::RIGHT | Keycode::L), .. } => actions.push(Action::SelectRight),
-                        Event::KeyDown { keycode: Some(Keycode::DOWN  | Keycode::J), .. } => actions.push(Action::SelectDown),
-                        Event::KeyDown { keycode: Some(Keycode::LEFT  | Keycode::H), .. } => actions.push(Action::SelectLeft),
-
-                        Event::KeyDown { keycode: Some(Keycode::MINUS), .. } => actions.push(Action::SpeedDecr),
-                        // it would be probably more appropriate to switch controls to
-                        // scancode, because for example keycode PLUS is not caught,
-                        // while the combination of LShift+EQUALS is.
-                        Event::KeyDown { keycode: Some(Keycode::EQUALS), keymod: Mod::LSHIFTMOD, .. } => actions.push(Action::SpeedIncr),
-
-                        Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => actions.push(Action::ToggleCell(x, y)),
-
-                        Event::KeyDown { keycode: Some(Keycode::SEMICOLON), keymod: Mod::RSHIFTMOD, .. } => actions.push(Action::SwitchMode(Mode::Command)),
-
-                        _ => {}
-                    }
-
+    fn handle_event_command(event: Event, actions: &mut Vec<Action>) -> PollResult {
+        match event {
+            Event::KeyDown { keycode, .. } => match keycode {
+                Some(Keycode::Backspace) => actions.push(Action::DelCommandChar),
+                Some(Keycode::Escape) => {
+                    actions.push(Action::CancelCommand);
+                    actions.push(Action::SwitchMode(Mode::Normal));
                 }
-                Mode::Command => {
-                    match event {
-                        Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                            actions.push(Action::CommandCancel);
-                            actions.push(Action::SwitchMode(Mode::Normal));
-                        }
+                _ => {}
+            },
+            Event::TextInput { text, .. } => actions.push(Action::AppendCommandChar(text)),
+            _ => {}
+        }
+        PollResult::Continue
+    }
 
-                        Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => actions.push(Action::CommandPop),
+    // it would be probably more appropriate to switch controls to scancode,
+    // because for example keycode PLUS is not caught, while the combination of
+    // LShift+EQUALS is.
+    fn handle_event_normal(event: Event, actions: &mut Vec<Action>) -> PollResult {
+        match event {
+            Event::KeyDown {
+                keycode: Some(keycode),
+                keymod,
+                ..
+            } => match (keycode, keymod) {
+                // SHIFT+Equals -> Plus
+                (Keycode::Equals, Mod::LSHIFTMOD | Mod::RSHIFTMOD) => {
+                    actions.push(Action::SpeedIncrease)
+                }
+                (Keycode::Escape, _) => return PollResult::Quit,
+                (Keycode::Minus, _) => actions.push(Action::SpeedDecrease),
+                (Keycode::Quote, _) => actions.push(Action::ToggleGrid),
+                (Keycode::Return, Mod::LSHIFTMOD | Mod::RSHIFTMOD) => {
+                    actions.push(Action::PlayPause)
+                }
+                // SHIFT+Semicolon -> Colon
+                (Keycode::Semicolon, Mod::LSHIFTMOD | Mod::RSHIFTMOD) => {
+                    actions.push(Action::AppendCommandChar(":".to_string()));
+                    actions.push(Action::SwitchMode(Mode::Command));
+                }
+                (Keycode::Space, _) => actions.push(Action::ToggleCursorCell),
+                (Keycode::H | Keycode::Left, _) => actions.push(Action::CursorLeft),
+                (Keycode::J | Keycode::Down, _) => actions.push(Action::CursorDown),
+                (Keycode::K | Keycode::Up, _) => actions.push(Action::CursorUp),
+                (Keycode::L | Keycode::Right, _) => actions.push(Action::CursorRight),
+                (Keycode::X, _) => actions.push(Action::HideCursor),
+                _ => {}
+            },
 
-                        Event::TextInput { text, .. } => actions.push(Action::CommandAppend(text)),
-
-                        _ => {}
-                    }
+            Event::MouseButtonDown {
+                mouse_btn, x, y, ..
+            } => {
+                if matches!(mouse_btn, MouseButton::Left) {
+                    actions.push(Action::ToggleClickedCell(x, y));
                 }
             }
+
+            Event::Quit { .. } => return PollResult::Quit,
+
+            _ => {}
         }
         PollResult::Continue
     }

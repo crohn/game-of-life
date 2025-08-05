@@ -31,10 +31,10 @@ impl GameState {
         self.running = false;
     }
 
-    pub fn toggle(&mut self) {
-        if !self.show_help {
-            self.running = !self.running;
-        }
+    pub fn toggle_running(&mut self) {
+        // if !self.show_help {
+        self.running = !self.running;
+        // }
     }
 
     pub fn toggle_grid(&mut self) {

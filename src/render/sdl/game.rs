@@ -71,37 +71,30 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    #[rustfmt::skip]
     fn update(&mut self) {
         for action in &self.actions {
             match action {
-                Action::Pause => self.game_state.pause(),
-                Action::PlayPause => self.game_state.toggle(),
-                Action::ShowHelp => self.game_state.help(),
-                Action::ToggleCell(x, y) => {
-                    let scale = self.renderer.layout.scale;
-                    let coords = Coords {
-                        x: x / scale as i32,
-                        y: y / scale as i32,
-                    };
-                    self.state.toggle_cell(&coords);
+                Action::AppendCommandChar(c) => {
+                    self.game_state.command.get_or_insert_default().push_str(c)
                 }
-                Action::ToggleGrid => self.game_state.toggle_grid(),
-                Action::Deselect => self.game_state.deselect_cell(),
-                Action::SelectUp => self.game_state.select_cell(0, -1, self.state.cols, self.state.rows),
-                Action::SelectRight => self.game_state.select_cell(1, 0, self.state.cols, self.state.rows),
-                Action::SelectDown =>  self.game_state.select_cell(0, 1, self.state.cols, self.state.rows),
-                Action::SelectLeft =>  self.game_state.select_cell(-1, 0, self.state.cols, self.state.rows),
-                Action::Toggle => {
-                    if let Some(coords) = &self.game_state.selected_cell {
-                        self.state.toggle_cell(coords);
-                    }
+                Action::CancelCommand => self.game_state.command = None,
+                Action::CursorDown => {
+                    self.game_state
+                        .select_cell(0, 1, self.state.cols, self.state.rows)
                 }
-                Action::SpeedIncr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms - 33).max(33),
-                Action::SpeedDecr => self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330),
-
-                Action::CommandAppend(s) => self.game_state.command.get_or_insert_default().push_str(s),
-                Action::CommandPop => {
+                Action::CursorLeft => {
+                    self.game_state
+                        .select_cell(-1, 0, self.state.cols, self.state.rows)
+                }
+                Action::CursorRight => {
+                    self.game_state
+                        .select_cell(1, 0, self.state.cols, self.state.rows)
+                }
+                Action::CursorUp => {
+                    self.game_state
+                        .select_cell(0, -1, self.state.cols, self.state.rows)
+                }
+                Action::DelCommandChar => {
                     if let Some(command) = &mut self.game_state.command {
                         if command.len() > 1 {
                             command.pop();
@@ -110,16 +103,31 @@ impl<'a> Game<'a> {
                             self.event_handler.mode = Mode::Normal;
                         }
                     }
-                },
-                Action::CommandCancel => self.game_state.command = None,
-                Action::SwitchMode(Mode::Command) => {
-                    self.game_state.command = Some(String::from(":"));
-                    self.event_handler.mode = Mode::Command;
                 }
-                Action::SwitchMode(Mode::Normal) => {
-                    self.game_state.command = None;
-                    self.event_handler.mode = Mode::Normal;
+                Action::HideCursor => self.game_state.deselect_cell(),
+                Action::PlayPause => self.game_state.toggle_running(),
+                Action::SpeedDecrease => {
+                    self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330)
                 }
+                Action::SpeedIncrease => {
+                    self.game_state.sim_period_ms = (self.game_state.sim_period_ms - 33).max(33)
+                }
+                Action::SwitchMode(Mode::Normal) => self.event_handler.mode = Mode::Normal,
+                Action::SwitchMode(Mode::Command) => self.event_handler.mode = Mode::Command,
+                Action::ToggleClickedCell(x, y) => {
+                    let scale = self.renderer.layout.scale;
+                    let coords = Coords {
+                        x: x / scale as i32,
+                        y: y / scale as i32,
+                    };
+                    self.state.toggle_cell(&coords);
+                }
+                Action::ToggleCursorCell => {
+                    if let Some(coords) = &self.game_state.selected_cell {
+                        self.state.toggle_cell(coords);
+                    }
+                }
+                Action::ToggleGrid => self.game_state.toggle_grid(),
             }
         }
     }
