@@ -1,6 +1,9 @@
 use crate::{
     core::{Coords, State},
-    render::sdl::{event_handler::PollResult, game_state::GameState},
+    render::sdl::{
+        event_handler::{Mode, PollResult},
+        game_state::GameState,
+    },
 };
 
 use super::{
@@ -102,10 +105,21 @@ impl<'a> Game<'a> {
                     if let Some(command) = &mut self.game_state.command {
                         if command.len() > 1 {
                             command.pop();
+                        } else {
+                            self.game_state.command = None;
+                            self.event_handler.mode = Mode::Normal;
                         }
                     }
                 },
                 Action::CommandCancel => self.game_state.command = None,
+                Action::SwitchMode(Mode::Command) => {
+                    self.game_state.command = Some(String::from(":"));
+                    self.event_handler.mode = Mode::Command;
+                }
+                Action::SwitchMode(Mode::Normal) => {
+                    self.game_state.command = None;
+                    self.event_handler.mode = Mode::Normal;
+                }
             }
         }
     }

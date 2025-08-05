@@ -10,7 +10,7 @@ pub enum PollResult {
     Quit,
 }
 
-enum Mode {
+pub enum Mode {
     Command,
     Normal,
 }
@@ -32,10 +32,11 @@ pub enum Action {
     CommandCancel,
     CommandAppend(String),
     CommandPop,
+    SwitchMode(Mode),
 }
 
 pub struct EventHandler {
-    mode: Mode,
+    pub mode: Mode,
     event_pump: EventPump,
 }
 
@@ -78,7 +79,7 @@ impl EventHandler {
 
                         Event::MouseButtonDown { mouse_btn: MouseButton::Left, x, y, .. } => actions.push(Action::ToggleCell(x, y)),
 
-                        Event::KeyDown { keycode: Some(Keycode::SEMICOLON), keymod: Mod::RSHIFTMOD, .. } => self.mode = Mode::Command,
+                        Event::KeyDown { keycode: Some(Keycode::SEMICOLON), keymod: Mod::RSHIFTMOD, .. } => actions.push(Action::SwitchMode(Mode::Command)),
 
                         _ => {}
                     }
@@ -88,7 +89,7 @@ impl EventHandler {
                     match event {
                         Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                             actions.push(Action::CommandCancel);
-                            self.mode = Mode::Normal;
+                            actions.push(Action::SwitchMode(Mode::Normal));
                         }
 
                         Event::KeyDown { keycode: Some(Keycode::Backspace), .. } => actions.push(Action::CommandPop),
