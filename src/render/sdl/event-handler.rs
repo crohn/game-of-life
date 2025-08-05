@@ -21,6 +21,7 @@ pub enum Action {
     AppendCommandChar(String),
     CancelCommand,
     DelCommandChar,
+    ExecCommand,
     // Normal
     CursorDown,
     CursorLeft,
@@ -64,6 +65,7 @@ impl EventHandler {
         match event {
             Event::KeyDown { keycode, .. } => match keycode {
                 Some(Keycode::Backspace) => actions.push(Action::DelCommandChar),
+                Some(Keycode::Return) => actions.push(Action::ExecCommand),
                 Some(Keycode::Escape) => {
                     actions.push(Action::CancelCommand);
                     actions.push(Action::SwitchMode(Mode::Normal));

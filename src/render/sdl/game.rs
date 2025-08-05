@@ -54,7 +54,9 @@ impl<'a> Game<'a> {
                 break 'running;
             };
 
-            self.update();
+            let PollResult::Continue = self.update() else {
+                break 'running;
+            };
 
             while self.timer_acc_ms >= self.game_state.sim_period_ms {
                 if self.game_state.running {
@@ -71,7 +73,7 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> PollResult {
         for action in &self.actions {
             match action {
                 Action::AppendCommandChar(c) => {
@@ -104,6 +106,13 @@ impl<'a> Game<'a> {
                         }
                     }
                 }
+                Action::ExecCommand => {
+                    match self.game_state.command.as_deref() {
+                        Some(":q") => return PollResult::Quit,
+                        _ => {}
+                    }
+                    self.game_state.command = None;
+                }
                 Action::HideCursor => self.game_state.deselect_cell(),
                 Action::PlayPause => self.game_state.toggle_running(),
                 Action::SpeedDecrease => {
@@ -130,5 +139,6 @@ impl<'a> Game<'a> {
                 Action::ToggleGrid => self.game_state.toggle_grid(),
             }
         }
+        PollResult::Continue
     }
 }
