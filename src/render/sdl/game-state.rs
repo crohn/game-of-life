@@ -1,22 +1,24 @@
-use crate::core::Coords;
+use std::collections::HashSet;
+
+use crate::core::{Coords, State};
 
 pub struct GameState {
+    pub(crate) command: Option<String>,
     pub(crate) running: bool,
+    pub(crate) cursor: HashSet<Coords>,
     pub(crate) show_grid: bool,
     pub(crate) show_help: bool,
-    pub(crate) command: Option<String>,
-    pub(crate) selected_cell: Option<Coords>,
     pub(crate) sim_period_ms: u64,
 }
 
 impl Default for GameState {
     fn default() -> Self {
         Self {
+            command: None,
+            cursor: HashSet::new(),
             running: false,
             show_grid: true,
             show_help: false,
-            command: None,
-            selected_cell: None,
             sim_period_ms: 33,
         }
     }
@@ -41,16 +43,32 @@ impl GameState {
         self.show_grid = !self.show_grid;
     }
 
-    pub fn deselect_cell(&mut self) {
-        self.selected_cell = None;
+    pub fn hide_cursor(&mut self) {
+        self.cursor.clear();
     }
 
-    pub fn select_cell(&mut self, x: i32, y: i32, cols: u32, rows: u32) {
-        if let Some(coords) = &mut self.selected_cell {
-            coords.x = (coords.x + x).rem_euclid(cols as i32);
-            coords.y = (coords.y + y).rem_euclid(rows as i32);
+    // Move existing cursor by (x,y) offset. Negative final coordinates are
+    // wrapped.
+    pub fn move_cursor(&mut self, x: i32, y: i32, state: &State) {
+        self.cursor = self
+            .cursor
+            .drain()
+            .map(|mut coords| {
+                coords.x += x;
+                coords.y += y;
+                state.wrap_coords(&mut coords);
+                coords
+            })
+            .collect();
+    }
+
+    pub fn add_cursor(&mut self, x: i32, y: i32, state: &State) {
+        let coords = state.create_coords(x, y);
+
+        if let None = self.cursor.get(&coords) {
+            self.cursor.insert(coords);
         } else {
-            self.selected_cell = Some(Coords { x: 0, y: 0 })
+            self.cursor.remove(&coords);
         }
     }
 }

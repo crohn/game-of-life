@@ -1,6 +1,7 @@
 use crate::{
-    core::{Coords, State},
+    core::State,
     render::sdl::{
+        command::{Command, parse},
         event_handler::{Mode, PollResult},
         game_state::GameState,
     },
@@ -80,22 +81,10 @@ impl<'a> Game<'a> {
                     self.game_state.command.get_or_insert_default().push_str(c)
                 }
                 Action::CancelCommand => self.game_state.command = None,
-                Action::CursorDown => {
-                    self.game_state
-                        .select_cell(0, 1, self.state.cols, self.state.rows)
-                }
-                Action::CursorLeft => {
-                    self.game_state
-                        .select_cell(-1, 0, self.state.cols, self.state.rows)
-                }
-                Action::CursorRight => {
-                    self.game_state
-                        .select_cell(1, 0, self.state.cols, self.state.rows)
-                }
-                Action::CursorUp => {
-                    self.game_state
-                        .select_cell(0, -1, self.state.cols, self.state.rows)
-                }
+                Action::CursorDown => self.game_state.move_cursor(0, 1, &self.state),
+                Action::CursorLeft => self.game_state.move_cursor(-1, 0, &self.state),
+                Action::CursorRight => self.game_state.move_cursor(1, 0, &self.state),
+                Action::CursorUp => self.game_state.move_cursor(0, -1, &self.state),
                 Action::DelCommandChar => {
                     if let Some(command) = &mut self.game_state.command {
                         if command.len() > 1 {
@@ -107,13 +96,16 @@ impl<'a> Game<'a> {
                     }
                 }
                 Action::ExecCommand => {
-                    match self.game_state.command.as_deref() {
-                        Some(":q") => return PollResult::Quit,
-                        _ => {}
+                    self.event_handler.mode = Mode::Normal;
+                    if let Some(input) = self.game_state.command.take() {
+                        return match parse(&input) {
+                            Ok(command) => self.execute_command(command),
+                            // TODO print error on statusbar
+                            Err(_) => PollResult::Continue,
+                        };
                     }
-                    self.game_state.command = None;
                 }
-                Action::HideCursor => self.game_state.deselect_cell(),
+                Action::HideCursor => self.game_state.hide_cursor(),
                 Action::PlayPause => self.game_state.toggle_running(),
                 Action::SpeedDecrease => {
                     self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330)
@@ -125,19 +117,25 @@ impl<'a> Game<'a> {
                 Action::SwitchMode(Mode::Command) => self.event_handler.mode = Mode::Command,
                 Action::ToggleClickedCell(x, y) => {
                     let scale = self.renderer.layout.scale;
-                    let coords = Coords {
-                        x: x / scale as i32,
-                        y: y / scale as i32,
-                    };
-                    self.state.toggle_cell(&coords);
+                    self.game_state
+                        .add_cursor(x / scale as i32, y / scale as i32, &self.state);
                 }
                 Action::ToggleCursorCell => {
-                    if let Some(coords) = &self.game_state.selected_cell {
-                        self.state.toggle_cell(coords);
+                    for coords in &self.game_state.cursor {
+                        self.state.toggle_cell(coords.x, coords.y);
                     }
                 }
                 Action::ToggleGrid => self.game_state.toggle_grid(),
             }
+        }
+        PollResult::Continue
+    }
+
+    fn execute_command(&mut self, command: Command) -> PollResult {
+        match command {
+            Command::BoardClear => self.state.clear(),
+            Command::Cursor(x, y) => self.game_state.add_cursor(x, y, &self.state),
+            Command::Quit => return PollResult::Quit,
         }
         PollResult::Continue
     }

@@ -30,6 +30,7 @@ impl Cell {
         }
     }
 
+    /// Flip cell state, `Dead -> Alive`, `Alive -> Dead`.
     pub fn toggle(&mut self) {
         *self = match self {
             Cell::Alive => Cell::Dead,

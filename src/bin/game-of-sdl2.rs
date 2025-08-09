@@ -1,12 +1,14 @@
 use game_of_life::{
-    core::{Cell, Config, Coords, State},
+    core::{Cell, Config, State},
     render::sdl::{
         event_handler::EventHandler, game::Game, layout::Layout, renderer::Renderer, timer::Timer,
     },
 };
 
+// TODO write readme file explaining dependencies
+
 const COLS: u32 = 80;
-const ROWS: u32 = 25;
+const ROWS: u32 = 80;
 const SCALE: u32 = 10;
 
 const FPS: u64 = 30;
@@ -52,11 +54,11 @@ fn main() -> Result<(), String> {
 
     let mut state = State::new(&config);
 
-    state.set_cell(Coords { x: 40, y: 39 }, Cell::Alive);
-    state.set_cell(Coords { x: 40, y: 40 }, Cell::Alive);
-    state.set_cell(Coords { x: 40, y: 41 }, Cell::Alive);
-    state.set_cell(Coords { x: 39, y: 40 }, Cell::Alive);
-    state.set_cell(Coords { x: 41, y: 41 }, Cell::Alive);
+    state.set_cell(40, 39, Cell::Alive);
+    state.set_cell(40, 40, Cell::Alive);
+    state.set_cell(40, 41, Cell::Alive);
+    state.set_cell(39, 40, Cell::Alive);
+    state.set_cell(41, 41, Cell::Alive);
 
     let mut game = Game::new(event_handler, renderer, timer, state);
     game.run()?;

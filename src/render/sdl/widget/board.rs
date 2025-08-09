@@ -31,13 +31,14 @@ impl Widget for Board {
             ctx.canvas.fill_rect(rect)?;
         }
 
-        if let Some(coords) = &ctx.game_state.selected_cell {
-            ctx.canvas.set_draw_color(ctx.theme.palette.cell_selected);
+        // cursor
+        ctx.canvas.set_draw_color(ctx.theme.palette.cell_selected);
+        for coords in &ctx.game_state.cursor {
             let rect = Rect::new(
-                coords.x * scale as i32,
-                coords.y * scale as i32,
-                scale,
-                scale,
+                (coords.x * scale as i32) + 1,
+                (coords.y * scale as i32) + 1,
+                scale - 3,
+                scale - 3,
             );
             ctx.canvas.draw_rect(rect)?;
         }

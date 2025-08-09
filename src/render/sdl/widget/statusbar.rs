@@ -1,7 +1,7 @@
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
-use crate::core::{Cell, State};
+use crate::core::State;
 use crate::render::sdl::game_state::GameState;
 use crate::render::sdl::renderer::RenderingContext;
 use crate::render::sdl::widget::Widget;
@@ -10,9 +10,6 @@ use crate::render::sdl::widget::text::Text;
 
 const TEXT_PAUSED: &str = "<PAUSED>";
 const TEXT_RUNNING: &str = "<RUNNING>";
-
-const CELL_ALIVE: &str = "ALIVE";
-const CELL_DEAD: &str = "DEAD";
 
 pub struct Statusbar;
 
@@ -39,18 +36,42 @@ impl Statusbar {
         }
     }
 
-    fn text_coords(game_state: &GameState, state: &State) -> Option<String> {
-        if let Some(selected) = &game_state.selected_cell {
-            let cell_state = match state.get_cell(&selected) {
-                Cell::Alive => CELL_ALIVE,
-                Cell::Dead => CELL_DEAD,
-            };
-            Some(format!(
-                " ({},{}) -> {}",
-                selected.x, selected.y, cell_state
-            ))
-        } else {
+    /// Display center of cursor selection.
+    ///
+    /// Center is computed taking `x_min, x_max, y_min, y_max` and then
+    /// calculating the middle points, eg. `(x_max + x_min) / 2`.
+    fn text_coords(game_state: &GameState, _state: &State) -> Option<String> {
+        if game_state.cursor.is_empty() {
             None
+        } else {
+            let (x_min, x_max, y_min, y_max) = game_state.cursor.iter().enumerate().fold(
+                (0i32, 0i32, 0i32, 0i32),
+                |mut bounds, (i, coords)| {
+                    if i == 0 {
+                        bounds.0 = coords.x;
+                        bounds.1 = coords.x;
+                        bounds.2 = coords.y;
+                        bounds.3 = coords.y;
+                    } else {
+                        bounds.0 = coords.x.min(bounds.0);
+                        bounds.1 = coords.x.max(bounds.1);
+                        bounds.2 = coords.y.min(bounds.2);
+                        bounds.3 = coords.y.max(bounds.3);
+                    }
+                    bounds
+                },
+            );
+            let x_center = (f64::from(x_min) + f64::from(x_max)) / 2.0;
+            let y_center = (f64::from(y_min) + f64::from(y_max)) / 2.0;
+            Some(format!(
+                " ({},{}) -- {} {} {} {}",
+                x_center.round(),
+                y_center.round(),
+                x_min,
+                x_max,
+                y_min,
+                y_max
+            ))
         }
     }
 

@@ -1,10 +1,10 @@
 use std::mem;
 
-use crate::core::Config;
+use crate::core::{Config, Coords, coords_to_index};
 
 use super::{
     cell::Cell,
-    coords::{self, Coords, coords_from_index},
+    coords::{self, coords_from_index},
 };
 
 /// Game of Life state
@@ -71,21 +71,33 @@ impl State {
         mem::swap(&mut self.curr, &mut self.next);
     }
 
-    pub fn get_cell(&self, coords: &Coords) -> Cell {
-        let index = coords.to_index(self.cols, self.rows);
-        self.curr[index]
-    }
-
-    /// Updates current board's cell state to match provided coordinates and
-    /// cell.
-    pub fn set_cell(&mut self, coords: Coords, value: Cell) {
-        let index = coords.to_index(self.cols, self.rows);
+    /// Updates current board's cell state to match provided coordinates and value.
+    pub fn set_cell(&mut self, x: i32, y: i32, value: Cell) {
+        let index = coords_to_index(x, y, self.cols, self.rows);
         self.curr[index] = value;
     }
 
-    pub fn toggle_cell(&mut self, coords: &Coords) {
-        let index = coords.to_index(self.cols, self.rows);
+    /// Flips cell state.
+    pub fn toggle_cell(&mut self, x: i32, y: i32) {
+        let index = coords_to_index(x, y, self.cols, self.rows);
         self.curr[index].toggle();
+    }
+
+    /// Fills the entire board with dead cells.
+    pub fn clear(&mut self) {
+        self.curr.fill(Cell::Dead);
+    }
+
+    pub fn create_coords(&self, x: i32, y: i32) -> Coords {
+        Coords {
+            x: x.rem_euclid(self.cols as i32),
+            y: y.rem_euclid(self.rows as i32),
+        }
+    }
+
+    pub fn wrap_coords(&self, coords: &mut Coords) {
+        coords.x = coords.x.rem_euclid(self.cols as i32);
+        coords.y = coords.y.rem_euclid(self.rows as i32);
     }
 }
 

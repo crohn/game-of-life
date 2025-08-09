@@ -1,3 +1,4 @@
+pub mod command;
 pub mod game;
 pub mod layout;
 pub mod renderer;
