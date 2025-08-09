@@ -1,11 +1,8 @@
+use crate::core::{Config, Coords};
+use std::iter::Iterator;
 use std::mem;
 
-use crate::core::{Config, Coords, coords_to_index};
-
-use super::{
-    cell::Cell,
-    coords::{self, coords_from_index},
-};
+use super::cell::Cell;
 
 /// Game of Life state
 ///
@@ -61,6 +58,13 @@ impl State {
             .fold(0, |count, &neighbor| count + self.curr[neighbor].as_value())
     }
 
+    pub fn iter(&self) -> BoardIterator {
+        BoardIterator {
+            index: 0,
+            state: &self,
+        }
+    }
+
     /// Compute next generation state based on current one.
     pub fn next(&mut self) {
         for (i, &cell) in self.curr.iter().enumerate() {
@@ -95,15 +99,37 @@ impl State {
         }
     }
 
-    pub fn wrap_coords(&self, coords: &mut Coords) {
-        coords.x = coords.x.rem_euclid(self.cols as i32);
-        coords.y = coords.y.rem_euclid(self.rows as i32);
+    pub fn wrap_coords(&self, coords: &Coords) -> Coords {
+        Coords {
+            x: coords.x.rem_euclid(self.cols as i32),
+            y: coords.y.rem_euclid(self.rows as i32),
+        }
+    }
+}
+
+pub struct BoardIterator<'a> {
+    index: usize,
+    state: &'a State,
+}
+
+impl<'a> Iterator for BoardIterator<'a> {
+    type Item = (Coords, &'a Cell);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.state.curr.len() {
+            None
+        } else {
+            let coords = coords_from_index(self.index, self.state.cols);
+            let cell = &self.state.curr[self.index];
+            self.index += 1;
+            Some((coords, cell))
+        }
     }
 }
 
 /// Returns a vector containing current cell's neighbors indices.
 ///
-/// ```
+/// ```txt
 /// +-----+-----+-----+
 /// | nw  |  n  | ne  |
 /// +-----+-----+-----+
@@ -121,8 +147,27 @@ fn get_neighbors_indices(index: usize, cols: u32, rows: u32) -> Vec<usize> {
             if coords.x == x && coords.y == y {
                 continue;
             }
-            indices.push(coords::coords_to_index(x, y, cols, rows))
+            indices.push(coords_to_index(x, y, cols, rows))
         }
     }
     indices
+}
+
+/// Converts Vector index into 2D coordinates (x, y).
+pub fn coords_from_index(index: usize, cols: u32) -> Coords {
+    let x = (index as u32 % cols) as i32;
+    let y = (index as u32 / cols) as i32;
+    Coords { x, y }
+}
+
+/// Converts 2D coordinates (x, y) into Vector index.
+///
+/// The conversion is wrapping, meaning that `x` values greater than `cols` or
+/// less than zero are always converted into ranges `0..=cols`. The same applies
+/// to `y` and `rows`.
+pub fn coords_to_index(x: i32, y: i32, cols: u32, rows: u32) -> usize {
+    let x = x.rem_euclid(cols as i32) as usize;
+    let y = y.rem_euclid(rows as i32) as usize;
+
+    cols as usize * y + x
 }

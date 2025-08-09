@@ -5,5 +5,5 @@ mod state;
 
 pub use cell::Cell;
 pub use config::Config;
-pub use coords::{Coords, coords_from_index, coords_to_index};
-pub use state::State;
+pub use coords::Coords;
+pub use state::{BoardIterator, State};

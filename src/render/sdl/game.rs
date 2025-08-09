@@ -81,10 +81,12 @@ impl<'a> Game<'a> {
                     self.game_state.command.get_or_insert_default().push_str(c)
                 }
                 Action::CancelCommand => self.game_state.command = None,
-                Action::CursorDown => self.game_state.move_cursor(0, 1, &self.state),
-                Action::CursorLeft => self.game_state.move_cursor(-1, 0, &self.state),
-                Action::CursorRight => self.game_state.move_cursor(1, 0, &self.state),
-                Action::CursorUp => self.game_state.move_cursor(0, -1, &self.state),
+                Action::CursorDown => self.game_state.move_cursor(0, 1),
+                Action::CursorLeft => self.game_state.move_cursor(-1, 0),
+                Action::CursorRight => self.game_state.move_cursor(1, 0),
+                Action::CursorUp => self.game_state.move_cursor(0, -1),
+                Action::CursorRotateLeft => self.game_state.selection.rotate_left(),
+                Action::CursorRotateRight => self.game_state.selection.rotate_right(),
                 Action::DelCommandChar => {
                     if let Some(command) = &mut self.game_state.command {
                         if command.len() > 1 {
@@ -118,10 +120,10 @@ impl<'a> Game<'a> {
                 Action::ToggleClickedCell(x, y) => {
                     let scale = self.renderer.layout.scale;
                     self.game_state
-                        .add_cursor(x / scale as i32, y / scale as i32, &self.state);
+                        .add_cursor(x / scale as i32, y / scale as i32);
                 }
                 Action::ToggleCursorCell => {
-                    for coords in &self.game_state.cursor {
+                    for coords in self.game_state.selection.iter() {
                         self.state.toggle_cell(coords.x, coords.y);
                     }
                 }
@@ -134,7 +136,7 @@ impl<'a> Game<'a> {
     fn execute_command(&mut self, command: Command) -> PollResult {
         match command {
             Command::BoardClear => self.state.clear(),
-            Command::Cursor(x, y) => self.game_state.add_cursor(x, y, &self.state),
+            Command::Cursor(x, y) => self.game_state.add_cursor(x, y),
             Command::Quit => return PollResult::Quit,
         }
         PollResult::Continue

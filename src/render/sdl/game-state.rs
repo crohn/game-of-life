@@ -1,11 +1,10 @@
-use std::collections::HashSet;
-
-use crate::core::{Coords, State};
+use crate::render::sdl::selection::Selection;
 
 pub struct GameState {
     pub(crate) command: Option<String>,
     pub(crate) running: bool,
-    pub(crate) cursor: HashSet<Coords>,
+    // pub(crate) cursor: HashSet<Coords>,
+    pub(crate) selection: Selection,
     pub(crate) show_grid: bool,
     pub(crate) show_help: bool,
     pub(crate) sim_period_ms: u64,
@@ -15,7 +14,7 @@ impl Default for GameState {
     fn default() -> Self {
         Self {
             command: None,
-            cursor: HashSet::new(),
+            selection: Selection::default(),
             running: false,
             show_grid: true,
             show_help: false,
@@ -44,31 +43,16 @@ impl GameState {
     }
 
     pub fn hide_cursor(&mut self) {
-        self.cursor.clear();
+        self.selection.clear();
     }
 
     // Move existing cursor by (x,y) offset. Negative final coordinates are
     // wrapped.
-    pub fn move_cursor(&mut self, x: i32, y: i32, state: &State) {
-        self.cursor = self
-            .cursor
-            .drain()
-            .map(|mut coords| {
-                coords.x += x;
-                coords.y += y;
-                state.wrap_coords(&mut coords);
-                coords
-            })
-            .collect();
+    pub fn move_cursor(&mut self, x: i32, y: i32) {
+        self.selection.move_by((x, y));
     }
 
-    pub fn add_cursor(&mut self, x: i32, y: i32, state: &State) {
-        let coords = state.create_coords(x, y);
-
-        if let None = self.cursor.get(&coords) {
-            self.cursor.insert(coords);
-        } else {
-            self.cursor.remove(&coords);
-        }
+    pub fn add_cursor(&mut self, x: i32, y: i32) {
+        self.selection.toggle((x, y));
     }
 }

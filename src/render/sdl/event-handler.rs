@@ -27,6 +27,8 @@ pub enum Action {
     CursorLeft,
     CursorRight,
     CursorUp,
+    CursorRotateLeft,
+    CursorRotateRight,
     HideCursor,
     PlayPause,
     SpeedDecrease,
@@ -108,6 +110,10 @@ impl EventHandler {
                 (Keycode::J | Keycode::Down, _) => actions.push(Action::CursorDown),
                 (Keycode::K | Keycode::Up, _) => actions.push(Action::CursorUp),
                 (Keycode::L | Keycode::Right, _) => actions.push(Action::CursorRight),
+                (Keycode::R, Mod::LSHIFTMOD | Mod::RSHIFTMOD) => {
+                    actions.push(Action::CursorRotateLeft)
+                }
+                (Keycode::R, _) => actions.push(Action::CursorRotateRight),
                 (Keycode::X, _) => actions.push(Action::HideCursor),
                 _ => {}
             },

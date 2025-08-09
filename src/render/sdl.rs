@@ -2,6 +2,7 @@ pub mod command;
 pub mod game;
 pub mod layout;
 pub mod renderer;
+pub mod selection;
 pub mod theme;
 pub mod timer;
 pub mod widget;
