@@ -3,8 +3,8 @@
 //!
 //! Cell selection offers the following features:
 //!
-//! - When clicking on a cell with Left mouse button, we either create a new
-//! selection or move the existing selection to the target coordinates.
+//! - When clicking on a cell with Left mouse button, if a selection exists, we
+//! move it to the target coordinates.
 //!
 //! - When Shift+clicking on a cell with Left mouse button, the existing
 //! selection is modified to include/remove the target cell, depending on

@@ -2,7 +2,7 @@ use crate::{
     core::State,
     render::sdl::{
         command::{Command, parse},
-        event_handler::{Mode, PollResult},
+        event_handler::Mode,
         game_state::GameState,
     },
 };
@@ -51,11 +51,11 @@ impl<'a> Game<'a> {
             self.timer_acc_ms += self.timer.frame_duration;
 
             self.actions.clear();
-            let PollResult::Continue = self.event_handler.poll(&mut self.actions) else {
+            if let Action::Quit = self.event_handler.poll(&mut self.actions) {
                 break 'running;
             };
 
-            let PollResult::Continue = self.update() else {
+            if let Action::Quit = self.update() {
                 break 'running;
             };
 
@@ -74,19 +74,42 @@ impl<'a> Game<'a> {
         Ok(())
     }
 
-    fn update(&mut self) -> PollResult {
+    fn update(&mut self) -> Action {
         for action in &self.actions {
             match action {
+                Action::Quit => unreachable!("Action quit should be handled on poll."),
+                Action::Continue => {}
+                // Normal mode actions
+                Action::SelClear => self.game_state.clear_sel(),
+                Action::SelLRot => self.game_state.rot_sel_counter(),
+                Action::SelMoveDown => self.game_state.mv_sel_down(1),
+                Action::SelMoveLeft => self.game_state.mv_sel_left(1),
+                Action::SelMoveRight => self.game_state.mv_sel_right(1),
+                Action::SelMoveUp => self.game_state.mv_sel_up(1),
+                Action::SelRRot => self.game_state.rot_sel_clockwise(),
+                Action::SelReCenter(coords) => self
+                    .game_state
+                    .recenter_sel(coords.rescale(self.renderer.layout.scale)),
+                Action::SelToggle(coords) => self
+                    .game_state
+                    .add_to_sel(coords.rescale(self.renderer.layout.scale)),
+                Action::SelToggleCell => {
+                    for coords in self.game_state.iter_sel() {
+                        self.state.toggle_cell(coords);
+                    }
+                }
+                Action::SimGridToggle => self.game_state.toggle_grid(),
+                Action::SimSpeedDecr => self.game_state.sim_speed_decr(),
+                Action::SimSpeedIncr => self.game_state.sim_speed_incr(),
+                Action::SimStartStop => self.game_state.toggle_running(),
+                Action::SimToggleCell(coords) => self
+                    .state
+                    .toggle_cell(&coords.rescale(self.renderer.layout.scale)),
+                // == TODO ==
                 Action::AppendCommandChar(c) => {
                     self.game_state.command.get_or_insert_default().push_str(c)
                 }
                 Action::CancelCommand => self.game_state.command = None,
-                Action::CursorDown => self.game_state.move_cursor(0, 1),
-                Action::CursorLeft => self.game_state.move_cursor(-1, 0),
-                Action::CursorRight => self.game_state.move_cursor(1, 0),
-                Action::CursorUp => self.game_state.move_cursor(0, -1),
-                Action::CursorRotateLeft => self.game_state.selection.rotate_left(),
-                Action::CursorRotateRight => self.game_state.selection.rotate_right(),
                 Action::DelCommandChar => {
                     if let Some(command) = &mut self.game_state.command {
                         if command.len() > 1 {
@@ -103,42 +126,26 @@ impl<'a> Game<'a> {
                         return match parse(&input) {
                             Ok(command) => self.execute_command(command),
                             // TODO print error on statusbar
-                            Err(_) => PollResult::Continue,
+                            Err(_) => Action::Continue,
                         };
                     }
                 }
-                Action::HideCursor => self.game_state.hide_cursor(),
-                Action::PlayPause => self.game_state.toggle_running(),
-                Action::SpeedDecrease => {
-                    self.game_state.sim_period_ms = (self.game_state.sim_period_ms + 33).min(330)
-                }
-                Action::SpeedIncrease => {
-                    self.game_state.sim_period_ms = (self.game_state.sim_period_ms - 33).max(33)
-                }
                 Action::SwitchMode(Mode::Normal) => self.event_handler.mode = Mode::Normal,
                 Action::SwitchMode(Mode::Command) => self.event_handler.mode = Mode::Command,
-                Action::ToggleClickedCell(x, y) => {
-                    let scale = self.renderer.layout.scale;
-                    self.game_state
-                        .add_cursor(x / scale as i32, y / scale as i32);
-                }
-                Action::ToggleCursorCell => {
-                    for coords in self.game_state.selection.iter() {
-                        self.state.toggle_cell(coords.x, coords.y);
-                    }
-                }
-                Action::ToggleGrid => self.game_state.toggle_grid(),
             }
         }
-        PollResult::Continue
+
+        self.event_handler.game_has_sel = self.game_state.has_sel();
+
+        Action::Continue
     }
 
-    fn execute_command(&mut self, command: Command) -> PollResult {
+    fn execute_command(&mut self, command: Command) -> Action {
         match command {
             Command::BoardClear => self.state.clear(),
-            Command::Cursor(x, y) => self.game_state.add_cursor(x, y),
-            Command::Quit => return PollResult::Quit,
+            Command::Cursor(x, y) => self.game_state.add_to_sel((x, y)),
+            Command::Quit => return Action::Quit,
         }
-        PollResult::Continue
+        Action::Continue
     }
 }

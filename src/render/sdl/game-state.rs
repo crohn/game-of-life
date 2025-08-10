@@ -1,9 +1,12 @@
-use crate::render::sdl::selection::Selection;
+use crate::{core::Coords, render::sdl::selection::Selection};
+
+const SIM_PERIOD_STEP: u64 = 33;
+const SIM_PERIOD_MAX: u64 = 33;
+const SIM_PERIOD_MIN: u64 = 330;
 
 pub struct GameState {
     pub(crate) command: Option<String>,
     pub(crate) running: bool,
-    // pub(crate) cursor: HashSet<Coords>,
     pub(crate) selection: Selection,
     pub(crate) show_grid: bool,
     pub(crate) show_help: bool,
@@ -38,21 +41,49 @@ impl GameState {
         // }
     }
 
+    // Simulation
+    pub fn sim_speed_decr(&mut self) {
+        self.sim_period_ms = (self.sim_period_ms - SIM_PERIOD_STEP).min(SIM_PERIOD_MIN);
+    }
+    pub fn sim_speed_incr(&mut self) {
+        self.sim_period_ms = (self.sim_period_ms - SIM_PERIOD_STEP).max(SIM_PERIOD_MAX);
+    }
     pub fn toggle_grid(&mut self) {
         self.show_grid = !self.show_grid;
     }
 
-    pub fn hide_cursor(&mut self) {
+    // Selection
+    pub fn add_to_sel<C: Into<Coords>>(&mut self, coords: C) {
+        self.selection.toggle(coords);
+    }
+    pub fn clear_sel(&mut self) {
         self.selection.clear();
     }
-
-    // Move existing cursor by (x,y) offset. Negative final coordinates are
-    // wrapped.
-    pub fn move_cursor(&mut self, x: i32, y: i32) {
-        self.selection.move_by((x, y));
+    pub fn has_sel(&self) -> bool {
+        !self.selection.is_empty()
     }
-
-    pub fn add_cursor(&mut self, x: i32, y: i32) {
-        self.selection.toggle((x, y));
+    pub fn iter_sel(&mut self) -> impl Iterator<Item = &Coords> {
+        self.selection.iter()
+    }
+    pub fn mv_sel_down(&mut self, offset: i32) {
+        self.selection.move_by((0, offset))
+    }
+    pub fn mv_sel_left(&mut self, offset: i32) {
+        self.selection.move_by((-offset, 0))
+    }
+    pub fn mv_sel_right(&mut self, offset: i32) {
+        self.selection.move_by((offset, 0))
+    }
+    pub fn mv_sel_up(&mut self, offset: i32) {
+        self.selection.move_by((0, -offset))
+    }
+    pub fn recenter_sel(&mut self, coords: Coords) {
+        self.selection.recenter_at(coords);
+    }
+    pub fn rot_sel_clockwise(&mut self) {
+        self.selection.rotate_right();
+    }
+    pub fn rot_sel_counter(&mut self) {
+        self.selection.rotate_left();
     }
 }

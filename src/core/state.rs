@@ -82,8 +82,8 @@ impl State {
     }
 
     /// Flips cell state.
-    pub fn toggle_cell(&mut self, x: i32, y: i32) {
-        let index = coords_to_index(x, y, self.cols, self.rows);
+    pub fn toggle_cell(&mut self, coords: &Coords) {
+        let index = coords_to_index(coords.x, coords.y, self.cols, self.rows);
         self.curr[index].toggle();
     }
 
