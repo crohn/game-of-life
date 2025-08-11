@@ -25,6 +25,32 @@ use std::{collections::HashSet, iter::Iterator};
 
 use crate::core::Coords;
 
+struct Bounds {
+    x_min: i32,
+    x_max: i32,
+    y_min: i32,
+    y_max: i32,
+}
+
+/// Calculate x and y bounds of a selection.
+///
+/// The bounds are used for those operations that require manipulating the whole
+/// selection, like re-center and rotate.
+#[rustfmt::skip]
+fn calc_bounds(selection: &HashSet<Coords>) -> Option<Bounds> {
+    selection
+        .iter()
+        .fold(None, |bounds, &Coords { x, y }| match bounds {
+            None => Some(Bounds { x_min: x, x_max: x, y_min: y, y_max: y, }),
+            Some(bounds) => Some(Bounds {
+                x_min: x.min(bounds.x_min),
+                x_max: x.max(bounds.x_max),
+                y_min: y.min(bounds.y_min),
+                y_max: y.max(bounds.y_max),
+            }),
+        })
+}
+
 #[derive(Default, Debug)]
 pub struct Selection {
     coords: HashSet<Coords>,
@@ -113,30 +139,39 @@ impl Selection {
     /// clockwise or counterclockwise.
     ///
     /// Rotation is computed as follows:
-    ///   1. calculate center
-    ///   2. normalize coords to center
+    ///   1. calculate bounds
+    ///   2. normalize coords to top-left (x_min, y_min)
     ///   3. apply rotation
     ///      clockwise (x',y') = (y, -x)
     ///      counterclockwise (x',y') = (-y, x)
-    ///   4. move back to center
+    ///   4. normalize coords to new top-left after rotation
+    ///   5. move back to old top-left
     fn rotate(&mut self, clockwise: bool) {
-        if let Some(center) = self.calc_center() {
-            self.coords = self
+        if let Some(bounds) = calc_bounds(&self.coords) {
+            #[rustfmt::skip]
+            let rotated: HashSet<Coords> = self
                 .coords
-                .drain()
-                .into_iter()
-                .map(|coords| {
-                    let x = coords.x - center.x;
-                    let y = coords.y - center.y;
-
-                    let (x_rot, y_rot) = if clockwise { (-y, x) } else { (y, -x) };
-
-                    Coords {
-                        x: x_rot + center.x,
-                        y: y_rot + center.y,
-                    }
+                .iter()
+                .map(|coords| Coords {     // (2) normalize top-left
+                    x: coords.x - bounds.x_min,
+                    y: coords.y - bounds.y_min,
                 })
-                .collect()
+                .map(|normalized| Coords { // (3) rotate
+                    x: if clockwise { normalized.y } else { -normalized.y },
+                    y: if clockwise { -normalized.x } else { normalized.x },
+                })
+                .collect();
+
+            if let Some(new_bounds) = calc_bounds(&rotated) {
+                self.coords = rotated
+                    .iter()
+                    .map(|coords| Coords {
+                        // (4,5) normalize new top-left + move back
+                        x: coords.x + bounds.x_min - new_bounds.x_min,
+                        y: coords.y + bounds.y_min - new_bounds.y_min,
+                    })
+                    .collect();
+            }
         }
     }
 
@@ -161,26 +196,18 @@ impl Selection {
 
     /// Compute the center of current selection.
     ///
-    /// This computation is essential for re-centering and rotation.
+    /// This computation is used for re-centering the selection.
     ///
-    /// The center of a selection is calculated collecting x min/max and y
-    /// min/max boundaries and calculating their middle points.
+    /// The center of a selection is calculated collecting x and y bounds and
+    /// then calculating their middle points.
+    #[rustfmt::skip]
     fn calc_center(&self) -> Option<Coords> {
-        self.coords
-            .iter()
-            .fold(None, |bounds, coords| match bounds {
-                None => Some((coords.x, coords.x, coords.y, coords.y)),
-                Some((x_min, x_max, y_min, y_max)) => Some((
-                    coords.x.min(x_min),
-                    coords.x.max(x_max),
-                    coords.y.min(y_min),
-                    coords.y.max(y_max),
-                )),
-            })
-            .map(|(x_min, x_max, y_min, y_max)| Coords {
+        calc_bounds(&self.coords).map(
+            |Bounds { x_min, x_max, y_min, y_max, }| Coords {
                 x: (x_min + x_max) / 2,
                 y: (y_min + y_max) / 2,
-            })
+            },
+        )
     }
 }
 
