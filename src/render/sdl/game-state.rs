@@ -43,7 +43,7 @@ impl GameState {
 
     // Simulation
     pub fn sim_speed_decr(&mut self) {
-        self.sim_period_ms = (self.sim_period_ms - SIM_PERIOD_STEP).min(SIM_PERIOD_MIN);
+        self.sim_period_ms = (self.sim_period_ms + SIM_PERIOD_STEP).min(SIM_PERIOD_MIN);
     }
     pub fn sim_speed_incr(&mut self) {
         self.sim_period_ms = (self.sim_period_ms - SIM_PERIOD_STEP).max(SIM_PERIOD_MAX);
