@@ -8,30 +8,16 @@ use std::mem;
 ///
 /// In the standard game (B3/S23), a dead cell becomes alive (Birth) if it has exactly 3 alive
 /// neighbors, while a living cell Survives if it has exactly 2 or 3 neighbors.
-#[derive(Clone)]
-enum Cell {
+pub enum Cell {
     Alive,
     Dead,
 }
 
-impl Cell {
-    /// Converts [Cell] into [u8] numerical value.
-    ///
-    /// The mapping `alive -> 1`, `dead -> 0` is convenient for neighbor count computation.
-    pub fn as_value(&self) -> u8 {
-        match self {
-            Cell::Alive => 1,
+impl From<Cell> for u8 {
+    fn from(value: Cell) -> Self {
+        match value {
             Cell::Dead => 0,
-        }
-    }
-
-    /// Applies B/S rules to advance the state of current cell.
-    pub fn next(&self, alive_count: u8) -> Self {
-        match (self, alive_count) {
-            (Cell::Alive, 2 | 3) => Cell::Alive, // S23
-            (Cell::Alive, _) => Cell::Dead,
-            (Cell::Dead, 3) => Cell::Alive,      // B3
-            (Cell::Dead, _) => Cell::Dead,
+            Cell::Alive => 1,
         }
     }
 }
@@ -40,7 +26,7 @@ impl Cell {
 ///
 /// Naming the dimensions { x, y } results in a more readable API in ambiguous contexts where `(i32,
 /// i32)` can be too generic.
-struct Coords {
+pub struct Coords {
     x: i32,
     y: i32,
 }
@@ -107,18 +93,23 @@ impl Grid {
 
         let curr = self.index_to_coords(index);
 
-        for y in curr.y - 1..=curr.y + 1 {
-            for x in curr.x - 1..=curr.x + 1 {
-                if x == curr.x && y == curr.y { continue; }
+        for dy in -1..=1 {
+            for dx in -1..=1 {
+                if dx == 0 && dy == 0 { continue; }
 
-                let neighbor = self.coords_to_index(&Coords { x, y });
-                neighbors.push(neighbor);
+                let neighbor = self.coords_to_index(&Coords {
+                   x: curr.x + dx, y: curr.y + dy,
+                });
+                neighbors.push(neighbor)
             }
         }
 
         neighbors
     }
 }
+
+const CELL_DEAD: u8 = 0;
+const CELL_ALIVE: u8 = 1;
 
 /// All the surrounding cells are considered neighbors: horizontal (2), vertical (2) and diagonal (4).
 const CELL_NEIGHBORS: usize = 8;
@@ -128,9 +119,10 @@ const CELL_NEIGHBORS: usize = 8;
 /// This struct holds the grid of cells and the logic required to advance the simulation from one
 /// generation to the next.
 pub struct World {
-    curr: Vec<Cell>,
-    next: Vec<Cell>,
+    curr: Vec<u8>,
+    next: Vec<u8>,
     neighbors: Vec<Vec<usize>>,
+    grid: Grid,
 }
 
 impl World {
@@ -142,14 +134,14 @@ impl World {
     /// simulation.
     pub fn new(cols: u32, rows: u32) -> Self {
         let capacity = (cols * rows) as usize;
-        let curr = vec![Cell::Dead; capacity];
+        let curr = vec![CELL_DEAD; capacity];
         let next = curr.clone();
 
         let grid = Grid::new(cols, rows);
         let neighbors = (0..capacity)
             .map(|i| grid.calc_neighbors(i)).collect();
 
-        World { curr, next, neighbors }
+        World { curr, next, neighbors, grid }
     }
 
     /// Advances the simulation by one generation.
@@ -157,19 +149,34 @@ impl World {
     /// The advancement is performed by applying game's rules to every cell based on its neighbors,
     /// updating the board to its next state.
     pub fn next(&mut self) {
-        for (i, cell) in self.curr.iter().enumerate() {
+        for (i, &cell) in self.curr.iter().enumerate() {
             let alive_neighs = self.count_alive_neighs(i);
-            self.next[i] = cell.next(alive_neighs);
+            // Apply B/S rules to advance current cell's state.
+            self.next[i] = match (cell, alive_neighs) {
+                (CELL_ALIVE, 2 | 3) => CELL_ALIVE, // S23
+                (CELL_ALIVE, _)     => CELL_DEAD,
+                (CELL_DEAD, 3)      => CELL_ALIVE, // B3
+                (CELL_DEAD, _)      => CELL_DEAD,
+                _ => unreachable!(),
+            }
         }
         mem::swap(&mut self.curr, &mut self.next);
     }
 
-    /// Returns the amount of [Cell::Alive] among neighbors.
+    /// Updates current board's cell value.
+    ///
+    /// Internally, [Coords] is converted to [usize], and [Cell] is converted to [u8], because the
+    /// board is a `Vec<u8>`.
+    pub fn set_cell(&mut self, coords: &Coords, cell: Cell) {
+        let index = self.grid.coords_to_index(coords);
+        self.curr[index] = cell.into();
+    }
+
+    /// Returns the amount of alive cells among neighbors.
     ///
     /// This computation is fast because [World] pre-computes neighbors indices upon creation.
     fn count_alive_neighs(&self, index: usize) -> u8 {
-        self.neighbors[index].iter()
-            .fold(0, |count, &neigh| count + self.curr[neigh].as_value())
+        self.neighbors[index].iter().map(|&neigh| self.curr[neigh]).sum()
     }
 }
 
