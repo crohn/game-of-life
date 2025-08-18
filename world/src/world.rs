@@ -1,5 +1,10 @@
 use std::mem;
 
+use crate::grid::{Coords, Grid};
+
+const CELL_DEAD: u8 = 0;
+const CELL_ALIVE: u8 = 1;
+
 /// During the simulation, each cell in [World]'s board is either in [Cell::Alive] or [Cell::Dead]
 /// state.
 ///
@@ -8,9 +13,20 @@ use std::mem;
 ///
 /// In the standard game (B3/S23), a dead cell becomes alive (Birth) if it has exactly 3 alive
 /// neighbors, while a living cell Survives if it has exactly 2 or 3 neighbors.
+#[derive(Debug, PartialEq)]
 pub enum Cell {
     Alive,
     Dead,
+}
+
+impl From<u8> for Cell {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Cell::Dead,
+            1 => Cell::Alive,
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl From<Cell> for u8 {
@@ -21,98 +37,6 @@ impl From<Cell> for u8 {
         }
     }
 }
-
-/// Simple abstraction of 2D system coordinates.
-///
-/// Naming the dimensions { x, y } results in a more readable API in ambiguous contexts where `(i32,
-/// i32)` can be too generic.
-pub struct Coords {
-    x: i32,
-    y: i32,
-}
-
-/// Simple 2D space abstraction.
-///
-/// This abstraction enables for a better separation of concerns between [World], focussed on
-/// game's logic, and [Grid], responsible for coordinates manipulation.
-struct Grid {
-    cols: u32,
-    rows: u32,
-}
-
-impl Grid {
-    pub fn new(cols: u32, rows: u32) -> Self {
-        Grid { cols, rows }
-    }
-
-    /// Converts a [Coords] into a vector index ([usize]).
-    ///
-    /// The conversion wraps both `x` and `y` coordinates when they are past grid's bounds on both
-    /// left and right. This means that, in an 10x10 grid:
-    ///
-    ///   - ( 0,  0) is top-left corner     -> index: 0  
-    ///   - ( 9,  9) is bottom-right corner -> index: 99 
-    ///   - (-1, -1) is bottom-right corner -> index: 99 (last index again)
-    ///   - (10, 10) is top-left corner     -> index: 0  (first index again)
-    pub fn coords_to_index(&self, coords: &Coords) -> usize {
-        let x = coords.x.rem_euclid(self.cols as i32) as usize;
-        let y = coords.y.rem_euclid(self.rows as i32) as usize;
-        self.cols as usize * y + x
-    }
-
-    /// Converts a vector index ([usize]) to [Coords].
-    ///
-    /// Based on the number of grid's columns, indices are wrapped into next rows.
-    pub fn index_to_coords(&self, index: usize) -> Coords {
-        let x = (index as u32 % self.cols) as i32;
-        let y = (index as u32 / self.cols) as i32;
-        Coords { x, y }
-    }
-
-    /// Returns a vector containing current cell's neighbors indices.
-    ///
-    /// The neighbors are calculated following the steps:
-    ///
-    ///   1. convert index to 2D coordinates (x_curr, y_curr);
-    ///   2. iterate the 3x3 square around (x_curr, y_curr);
-    ///   3. skip the current cell;
-    ///   4. for each neighbor (x', y'), convert their 2D coords to index.
-    ///
-    /// ```txt
-    /// ASCII representation
-    /// +--------------------------+----------------------+--------------------------+
-    /// | (x_curr - 1, y_curr - 1) | (x_curr, y_curr - 1) | (x_curr + 1, y_curr - 1) |
-    /// +--------------------------+----------------------+--------------------------+
-    /// | (x_curr - 1, y_curr    ) | (x_curr, y_curr    ) | (x_curr + 1, y_curr    ) |
-    /// +--------------------------+----------------------+--------------------------+
-    /// | (x_curr - 1, y_curr + 1) | (x_curr, y_curr + 1) | (x_curr + 1, y_curr + 1) |
-    /// +--------------------------+----------------------+--------------------------+
-    /// ```
-    pub fn calc_neighbors(&self, index: usize) -> Vec<usize> {
-        let mut neighbors = Vec::with_capacity(CELL_NEIGHBORS);
-
-        let curr = self.index_to_coords(index);
-
-        for dy in -1..=1 {
-            for dx in -1..=1 {
-                if dx == 0 && dy == 0 { continue; }
-
-                let neighbor = self.coords_to_index(&Coords {
-                   x: curr.x + dx, y: curr.y + dy,
-                });
-                neighbors.push(neighbor)
-            }
-        }
-
-        neighbors
-    }
-}
-
-const CELL_DEAD: u8 = 0;
-const CELL_ALIVE: u8 = 1;
-
-/// All the surrounding cells are considered neighbors: horizontal (2), vertical (2) and diagonal (4).
-const CELL_NEIGHBORS: usize = 8;
 
 /// Represents the state and rules of a Conway's Game of Life simulation.
 ///
@@ -172,11 +96,135 @@ impl World {
         self.curr[index] = cell.into();
     }
 
+    pub fn get_cell(&self, coords: &Coords) -> Cell {
+        let index = self.grid.coords_to_index(coords);
+        self.curr[index].into()
+    }
+
     /// Returns the amount of alive cells among neighbors.
     ///
     /// This computation is fast because [World] pre-computes neighbors indices upon creation.
     fn count_alive_neighs(&self, index: usize) -> u8 {
         self.neighbors[index].iter().map(|&neigh| self.curr[neigh]).sum()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn world_init() {
+        let cols = 4;
+        let rows = 8;
+
+        let world = World::new(cols, rows);
+
+        assert_eq!(world.curr.len(), (cols * rows) as usize);
+        assert!(world.curr.iter().all(|&cell| cell == 0));
+        assert_eq!(world.curr, world.next);
+        assert_eq!(world.neighbors.len(), (cols * rows) as usize);
+    }
+
+    #[test]
+    fn world_can_mutate_cell() {
+        let mut world = World::new(4, 4);
+        assert_eq!(world.curr[0], 0);
+
+        world.set_cell(&Coords { x: 4, y: 4 }, Cell::Alive);
+        assert_eq!(world.curr[0], 1);
+    }
+
+    #[test]
+    fn world_can_read_cell() {
+        let mut world = World::new(4, 4);
+
+        world.set_cell(&Coords { x: 4, y: 4 }, Cell::Alive);
+        let value = world.get_cell(&Coords { x: 4, y: 4});
+        assert_eq!(value, Cell::Alive);
+    }
+
+    //   glider
+    //  -------
+    //  0 0 1 0 
+    //  0 0 0 1
+    //  0 1 1 1
+    //  0 0 0 0
+    //
+    #[test]
+    fn world_counts_alive_neighbors() {
+        let mut world = World::new(4, 4);
+
+        world.set_cell(&Coords { x: 2, y: 0 }, Cell::Alive);
+        world.set_cell(&Coords { x: 3, y: 1 }, Cell::Alive);
+        world.set_cell(&Coords { x: 1, y: 2 }, Cell::Alive);
+        world.set_cell(&Coords { x: 2, y: 2 }, Cell::Alive);
+        world.set_cell(&Coords { x: 3, y: 2 }, Cell::Alive);
+
+        let cases = [
+            (0, 1), (1, 1), (2, 1), (3, 2),
+            (4, 3), (5, 3), (6, 5), (7, 3),
+            (8, 3), (9, 1), (10, 3), (11, 2),
+            (12, 2), (13, 3), (14, 4), (15, 3),
+        ];
+
+        for (index, neighbor_count) in cases {
+            assert_eq!(world.count_alive_neighs(index), neighbor_count);
+        }
+    }
+
+    //        t0             t1            t2 
+    //      -----          -----          -----
+    //    0 0 0 0 0      0 0 0 0 0      0 0 0 0 0
+    //    0 0 1 0 0      0 0 0 0 0      0 0 1 0 0
+    //    0 0 1 0 0  =>  0 1 1 1 0  =>  0 0 1 0 0
+    //    0 0 1 0 0      0 0 0 0 0      0 0 1 0 0
+    //    0 0 0 0 0      0 0 0 0 0      0 0 0 0 0
+    //
+    #[test]
+    fn it_works() {
+        let mut world = World::new(5, 5);
+
+        // blinker pattern, see ASCII diagram above
+        world.set_cell(&Coords { x: 2, y: 1}, Cell::Alive);
+        world.set_cell(&Coords { x: 2, y: 2}, Cell::Alive);
+        world.set_cell(&Coords { x: 2, y: 3}, Cell::Alive);
+
+        // check (2,2) coords neighborhood because of how blinker pattern behaves
+
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 1}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 2}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 2}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 2}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 3}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 3}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 3}), Cell::Dead);
+
+        world.next();
+
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 2}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 2}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 2}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 3}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 3}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 3}), Cell::Dead);
+
+        world.next();
+
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 1}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 1}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 2}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 2}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 2}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 1, y: 3}), Cell::Dead);
+        assert_eq!(world.get_cell(&Coords { x: 2, y: 3}), Cell::Alive);
+        assert_eq!(world.get_cell(&Coords { x: 3, y: 3}), Cell::Dead);
     }
 }
 
